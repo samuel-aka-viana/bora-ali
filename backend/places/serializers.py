@@ -1,14 +1,30 @@
+import re
+
 from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
 
 from .models import Place, Visit, VisitItem
 
 
+def _extract_coords(url: str) -> tuple[float, float] | tuple[None, None]:
+    """Extract (lat, lng) from a Google Maps URL, or return (None, None)."""
+    patterns = [
+        r"@(-?\d+\.\d+),(-?\d+\.\d+)",
+        r"[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)",
+        r"[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)",
+    ]
+    for pat in patterns:
+        m = re.search(pat, url)
+        if m:
+            return float(m.group(1)), float(m.group(2))
+    return None, None
+
+
 class VisitItemSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = VisitItem
         fields = (
-            "id",
+            "public_id",
             "visit",
             "name",
             "type",
@@ -17,11 +33,10 @@ class VisitItemSerializer(FlexFieldsModelSerializer):
             "would_order_again",
             "notes",
             "photo",
-            "photo_path",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "visit", "created_at", "updated_at")
+        read_only_fields = ("public_id", "visit", "created_at", "updated_at")
 
 
 class VisitItemWriteSerializer(FlexFieldsModelSerializer):
@@ -35,7 +50,6 @@ class VisitItemWriteSerializer(FlexFieldsModelSerializer):
             "would_order_again",
             "notes",
             "photo",
-            "photo_path",
         )
 
 
@@ -45,7 +59,7 @@ class VisitSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = Visit
         fields = (
-            "id",
+            "public_id",
             "place",
             "visited_at",
             "environment_rating",
@@ -54,12 +68,11 @@ class VisitSerializer(FlexFieldsModelSerializer):
             "would_return",
             "general_notes",
             "photo",
-            "photo_path",
             "items",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "place", "items", "created_at", "updated_at")
+        read_only_fields = ("public_id", "place", "items", "created_at", "updated_at")
         expandable_fields = {
             "place": ("places.serializers.PlaceListSerializer", {"read_only": True}),
             "items": (
@@ -73,7 +86,7 @@ class VisitExpandSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = Visit
         fields = (
-            "id",
+            "public_id",
             "place",
             "visited_at",
             "environment_rating",
@@ -82,7 +95,6 @@ class VisitExpandSerializer(FlexFieldsModelSerializer):
             "would_return",
             "general_notes",
             "photo",
-            "photo_path",
             "created_at",
             "updated_at",
         )
@@ -107,7 +119,6 @@ class VisitWriteSerializer(FlexFieldsModelSerializer):
             "would_return",
             "general_notes",
             "photo",
-            "photo_path",
         )
 
 
@@ -115,7 +126,7 @@ class PlaceListSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = Place
         fields = (
-            "id",
+            "public_id",
             "name",
             "category",
             "address",
@@ -124,6 +135,7 @@ class PlaceListSerializer(FlexFieldsModelSerializer):
             "created_at",
             "updated_at",
         )
+        read_only_fields = ("public_id", "created_at", "updated_at")
         expandable_fields = {
             "visits": (
                 "places.serializers.VisitExpandSerializer",
@@ -151,15 +163,26 @@ class PlaceDetailSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = Place
         fields = (
-            "id",
+            "public_id",
             "name",
             "category",
             "address",
             "instagram_url",
             "maps_url",
+            "latitude",
+            "longitude",
             "status",
             "notes",
             "cover_photo",
+            "visits",
+            "consumables_count",
+            "average_consumable_rating",
+            "total_consumed_amount",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "public_id",
             "visits",
             "consumables_count",
             "average_consumable_rating",
@@ -179,18 +202,31 @@ class PlaceWriteSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = Place
         fields = (
-            "id",
+            "public_id",
             "name",
             "category",
             "address",
             "instagram_url",
             "maps_url",
+            "latitude",
+            "longitude",
             "status",
             "notes",
             "cover_photo",
         )
-        read_only_fields = ("id",)
+        read_only_fields = ("public_id", "latitude", "longitude")
+
+    def _sync_coords(self, validated_data: dict) -> dict:
+        maps_url = validated_data.get("maps_url", "")
+        if maps_url:
+            lat, lng = _extract_coords(maps_url)
+            validated_data["latitude"] = lat
+            validated_data["longitude"] = lng
+        return validated_data
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
-        return super().create(validated_data)
+        return super().create(self._sync_coords(validated_data))
+
+    def update(self, instance, validated_data):
+        return super().update(instance, self._sync_coords(validated_data))
