@@ -1,12 +1,20 @@
 import { api } from "./api";
+import { toFormData, hasFile, stripStringImages } from "./form-data";
 import type { Visit } from "../types/visit";
 
-export const visitsService = {
-  create: (placeId: number, data: Partial<Visit>) =>
-    api.post<Visit>(`/places/${placeId}/visits/`, data).then((r) => r.data),
+type VisitPayload = Partial<Omit<Visit, "photo">> & { photo?: string | File };
 
-  update: (id: number, data: Partial<Visit>) =>
-    api.patch<Visit>(`/visits/${id}/`, data).then((r) => r.data),
+function toPayload(data: VisitPayload) {
+  const d = stripStringImages(data as Record<string, unknown>);
+  return hasFile(d) ? toFormData(d) : d;
+}
+
+export const visitsService = {
+  create: (placeId: number, data: VisitPayload) =>
+    api.post<Visit>(`/places/${placeId}/visits/`, toPayload(data)).then((r) => r.data),
+
+  update: (id: number, data: VisitPayload) =>
+    api.patch<Visit>(`/visits/${id}/`, toPayload(data)).then((r) => r.data),
 
   remove: (id: number) => api.delete(`/visits/${id}/`),
 };

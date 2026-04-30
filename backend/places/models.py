@@ -1,11 +1,15 @@
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
 class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="created at", db_column="created_at")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="updated at", db_column="updated_at")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="created at", db_column="created_at"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name="updated at", db_column="updated_at"
+    )
 
     class Meta:
         abstract = True
@@ -37,10 +41,18 @@ class Place(TimeStampedModel):
         db_column="user_id",
     )
     name = models.CharField(max_length=200, verbose_name="name", db_column="name")
-    category = models.CharField(max_length=100, verbose_name="category", db_column="category")
-    address = models.CharField(max_length=300, blank=True, verbose_name="address", db_column="address")
-    instagram_url = models.URLField(blank=True, verbose_name="instagram url", db_column="instagram_url")
-    maps_url = models.URLField(blank=True, verbose_name="maps url", db_column="maps_url")
+    category = models.CharField(
+        max_length=100, verbose_name="category", db_column="category"
+    )
+    address = models.CharField(
+        max_length=300, blank=True, verbose_name="address", db_column="address"
+    )
+    instagram_url = models.URLField(
+        blank=True, verbose_name="instagram url", db_column="instagram_url"
+    )
+    maps_url = models.URLField(
+        blank=True, verbose_name="maps url", db_column="maps_url"
+    )
     status = models.CharField(
         max_length=32,
         choices=PlaceStatus.choices,
@@ -49,8 +61,12 @@ class Place(TimeStampedModel):
         db_column="status",
     )
     notes = models.TextField(blank=True, verbose_name="notes", db_column="notes")
-    cover_photo_path = models.CharField(
-        max_length=500, blank=True, verbose_name="cover photo path", db_column="cover_photo_path"
+    cover_photo = models.ImageField(
+        upload_to="places/covers/",
+        blank=True,
+        null=True,
+        verbose_name="cover photo",
+        db_column="cover_photo",
     )
 
     class Meta:
@@ -99,9 +115,22 @@ class Visit(TimeStampedModel):
         null=True,
         blank=True,
     )
-    would_return = models.BooleanField(default=True, verbose_name="would return", db_column="would_return")
-    general_notes = models.TextField(blank=True, verbose_name="general notes", db_column="general_notes")
-    photo_path = models.CharField(max_length=500, blank=True, verbose_name="photo path", db_column="photo_path")
+    would_return = models.BooleanField(
+        default=True, verbose_name="would return", db_column="would_return"
+    )
+    general_notes = models.TextField(
+        blank=True, verbose_name="general notes", db_column="general_notes"
+    )
+    photo = models.ImageField(
+        upload_to="visits/photos/",
+        blank=True,
+        null=True,
+        verbose_name="photo",
+        db_column="photo",
+    )
+    photo_path = models.CharField(
+        max_length=500, blank=True, verbose_name="photo path", db_column="photo_path"
+    )
 
     class Meta:
         db_table = "places_visit"
@@ -151,7 +180,16 @@ class VisitItem(TimeStampedModel):
         default=True, verbose_name="would order again", db_column="would_order_again"
     )
     notes = models.TextField(blank=True, verbose_name="notes", db_column="notes")
-    photo_path = models.CharField(max_length=500, blank=True, verbose_name="photo path", db_column="photo_path")
+    photo = models.ImageField(
+        upload_to="visit_items/photos/",
+        blank=True,
+        null=True,
+        verbose_name="photo",
+        db_column="photo",
+    )
+    photo_path = models.CharField(
+        max_length=500, blank=True, verbose_name="photo path", db_column="photo_path"
+    )
 
     class Meta:
         db_table = "places_visit_item"

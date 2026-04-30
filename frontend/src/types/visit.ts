@@ -9,7 +9,7 @@ export interface Visit {
   overall_rating: number;
   would_return: boolean;
   general_notes?: string;
-  photo_path?: string;
+  photo?: string;
   items: VisitItem[];
   created_at: string;
   updated_at: string;

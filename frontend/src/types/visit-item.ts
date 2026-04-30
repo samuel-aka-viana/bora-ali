@@ -9,7 +9,7 @@ export interface VisitItem {
   price: string;
   would_order_again: boolean;
   notes?: string;
-  photo_path?: string;
+  photo?: string;
   created_at: string;
   updated_at: string;
 }

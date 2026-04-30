@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { placesService, type PlaceWithVisits } from "../services/places.service";
+import { visitsService } from "../services/visits.service";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
@@ -109,7 +110,17 @@ export default function PlaceDetailPage() {
       {place.visits.length === 0 ? (
         <p className="text-muted text-sm text-center py-6">No visits yet.</p>
       ) : (
-        place.visits.map((v) => <VisitCard key={v.id} visit={v} />)
+        place.visits.map((v) => (
+          <VisitCard
+            key={v.id}
+            visit={v}
+            onEdit={() => nav(`/visits/${v.id}/edit`, { state: { visit: v } })}
+            onDelete={async () => {
+              await visitsService.remove(v.id);
+              setPlace({ ...place, visits: place.visits.filter((x) => x.id !== v.id) });
+            }}
+          />
+        ))
       )}
     </div>
   );

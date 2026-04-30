@@ -9,7 +9,7 @@ export interface Place {
   maps_url?: string;
   status: PlaceStatus;
   notes?: string;
-  cover_photo_path?: string;
+  cover_photo?: string;
   created_at: string;
   updated_at: string;
 }

@@ -29,7 +29,7 @@ export default function PlacesPage() {
   }, [search, status, page]);
 
   return (
-    <div className="max-w-3xl mx-auto p-4 space-y-4">
+    <div className="max-w-5xl mx-auto p-4 space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Bora Ali</h1>
         <div className="flex w-full gap-2 sm:w-auto">
@@ -76,7 +76,9 @@ export default function PlacesPage() {
       {!loading && !error && data?.count === 0 && (
         <EmptyState title="No places yet" description="Add your first place to get started." />
       )}
-      {!loading && !error && data?.results.map((p) => <PlaceCard key={p.id} place={p} />)}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {!loading && !error && data?.results.map((p) => <PlaceCard key={p.id} place={p} />)}
+      </div>
 
       {data && (data.next || data.previous) && (
         <div className="flex items-center justify-between gap-3">

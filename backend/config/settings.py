@@ -1,6 +1,7 @@
-from pathlib import Path
 import os
 from datetime import timedelta
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -70,7 +71,9 @@ DATABASES = {
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -82,6 +85,41 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# VersityGW Object Storage Configuration
+if os.getenv("USE_VERSITYGW", "False") == "True":
+    # Use VersityGW (S3-compatible) for file storage
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "bucket_name": os.getenv("AWS_STORAGE_BUCKET_NAME", "bora-ali"),
+                "region_name": os.getenv("AWS_S3_REGION_NAME", "us-east-1"),
+                "endpoint_url": os.getenv("AWS_S3_ENDPOINT_URL", "http://localhost:8081"),
+                "use_ssl": os.getenv("AWS_S3_USE_SSL", "False") == "True",
+                "addressing_style": "path",
+                "signature_version": "s3v4",
+                "default_acl": None,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    MEDIA_URL = f"{os.getenv('AWS_S3_ENDPOINT_URL', 'http://localhost:8080')}/{os.getenv('AWS_STORAGE_BUCKET_NAME', 'bora-ali')}/"
+else:
+    # Use local filesystem for development
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
@@ -123,6 +161,6 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
 }
 
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:5173"
-).split(",")
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(
+    ","
+)
