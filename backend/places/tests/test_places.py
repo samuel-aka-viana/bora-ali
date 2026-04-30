@@ -15,6 +15,17 @@ def test_create_place(auth_client):
     assert r.status_code == 201
 
 
+def test_create_place_returns_public_id(auth_client):
+    r = auth_client.post(
+        "/api/places/",
+        {"name": "Café X", "category": "café", "status": "want_to_visit"},
+        format="json",
+    )
+    assert r.status_code == 201
+    assert "public_id" in r.data
+    assert "id" not in r.data
+
+
 def test_list_only_own(auth_client, user, other_user):
     baker.make("places.Place", user=user, _quantity=2)
     baker.make("places.Place", user=other_user, _quantity=3)
@@ -25,7 +36,7 @@ def test_list_only_own(auth_client, user, other_user):
 
 def test_cannot_access_others_place(auth_client, other_user):
     p = baker.make("places.Place", user=other_user)
-    assert auth_client.get(f"/api/places/{p.id}/").status_code == 404
+    assert auth_client.get(f"/api/places/{p.public_id}/").status_code == 404
 
 
 def test_filter_by_status(auth_client, user):
@@ -55,11 +66,11 @@ def test_detail_includes_consumables_summary(auth_client, user):
     baker.make("places.VisitItem", visit=visit, rating=8, price="12.50")
     baker.make("places.VisitItem", visit=visit, rating=10, price="18.00")
 
-    r = auth_client.get(f"/api/places/{place.id}/")
+    r = auth_client.get(f"/api/places/{place.public_id}/")
 
     assert r.status_code == 200
     assert r.data["consumables_count"] == 2
-    assert r.data["average_consumable_rating"] == 9
+    assert float(r.data["average_consumable_rating"]) == 9.0
     assert r.data["total_consumed_amount"] == "30.50"
 
 
@@ -70,7 +81,7 @@ def test_detail_avoids_n_plus_one_queries(auth_client, user):
         baker.make("places.VisitItem", visit=visit, _quantity=4)
 
     with CaptureQueriesContext(connection) as queries:
-        r = auth_client.get(f"/api/places/{place.id}/")
+        r = auth_client.get(f"/api/places/{place.public_id}/")
 
     assert r.status_code == 200
     assert len(queries) == 3

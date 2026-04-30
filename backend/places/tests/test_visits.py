@@ -15,23 +15,25 @@ PAYLOAD = {
 
 def test_create_visit_in_own_place(auth_client, user):
     p = baker.make("places.Place", user=user)
-    r = auth_client.post(f"/api/places/{p.id}/visits/", PAYLOAD, format="json")
+    r = auth_client.post(f"/api/places/{p.public_id}/visits/", PAYLOAD, format="json")
     assert r.status_code == 201
+    assert "public_id" in r.data
+    assert "id" not in r.data
 
 
 def test_reject_foreign_place(auth_client, other_user):
     p = baker.make("places.Place", user=other_user)
-    r = auth_client.post(f"/api/places/{p.id}/visits/", PAYLOAD, format="json")
+    r = auth_client.post(f"/api/places/{p.public_id}/visits/", PAYLOAD, format="json")
     assert r.status_code == 404
 
 
 def test_rating_out_of_range(auth_client, user):
     p = baker.make("places.Place", user=user)
     bad = {**PAYLOAD, "overall_rating": 11}
-    assert auth_client.post(f"/api/places/{p.id}/visits/", bad, format="json").status_code == 400
+    assert auth_client.post(f"/api/places/{p.public_id}/visits/", bad, format="json").status_code == 400
 
 
 def test_negative_rating(auth_client, user):
     p = baker.make("places.Place", user=user)
     bad = {**PAYLOAD, "environment_rating": -1}
-    assert auth_client.post(f"/api/places/{p.id}/visits/", bad, format="json").status_code == 400
+    assert auth_client.post(f"/api/places/{p.public_id}/visits/", bad, format="json").status_code == 400
