@@ -3,6 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from core.models import PublicIdModel
 from .managers import PlaceQuerySet, VisitItemQuerySet, VisitQuerySet
 
 
@@ -35,7 +36,7 @@ class VisitItemType(models.TextChoices):
     OTHER = "other", _("Other")
 
 
-class Place(TimeStampedModel):
+class Place(PublicIdModel, TimeStampedModel):
     objects = PlaceQuerySet.as_manager()
 
     user = models.ForeignKey(
@@ -57,6 +58,14 @@ class Place(TimeStampedModel):
     )
     maps_url = models.URLField(
         blank=True, verbose_name="maps url", db_column="maps_url"
+    )
+    latitude = models.DecimalField(
+        max_digits=10, decimal_places=7,
+        blank=True, null=True, verbose_name="latitude", db_column="latitude"
+    )
+    longitude = models.DecimalField(
+        max_digits=10, decimal_places=7,
+        blank=True, null=True, verbose_name="longitude", db_column="longitude"
     )
     status = models.CharField(
         max_length=32,
@@ -84,7 +93,7 @@ class Place(TimeStampedModel):
         return self.name
 
 
-class Visit(TimeStampedModel):
+class Visit(PublicIdModel, TimeStampedModel):
     objects = VisitQuerySet.as_manager()
 
     place = models.ForeignKey(
@@ -149,7 +158,7 @@ class Visit(TimeStampedModel):
         return f"{self.place.name} @ {self.visited_at:%Y-%m-%d}"
 
 
-class VisitItem(TimeStampedModel):
+class VisitItem(PublicIdModel, TimeStampedModel):
     objects = VisitItemQuerySet.as_manager()
 
     visit = models.ForeignKey(
