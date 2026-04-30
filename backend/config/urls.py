@@ -4,10 +4,13 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.permissions import IsAuthenticated
 
+from core.media_views import serve_user_media
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
     path("api/", include("places.urls")),
+    path("api/media/<path:path>", serve_user_media, name="serve-user-media"),
 ]
 
 # Documentação da API disponível apenas em DEBUG ou para usuários autenticados.
