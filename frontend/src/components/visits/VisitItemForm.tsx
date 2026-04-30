@@ -6,6 +6,7 @@ import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { RatingInput } from "../ui/RatingInput";
 import { Textarea } from "../ui/Textarea";
+import { validateImageFile, ALLOWED_IMAGE_ACCEPT } from "../../utils/url";
 
 type VisitItemPayload = Partial<Omit<VisitItem, "photo">> & { photo?: string | File };
 
@@ -19,12 +20,30 @@ export function VisitItemForm({ value, onChange }: Props) {
   const { t } = useTranslation();
   const existingPhoto = typeof value.photo === "string" ? value.photo : null;
   const [preview, setPreview] = useState<string | null>(existingPhoto);
+  const [photoError, setPhotoError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
-    setPreview(file ? URL.createObjectURL(file) : existingPhoto);
-    onChange({ ...value, photo: file ?? undefined });
+    if (!file) {
+      setPreview(existingPhoto);
+      onChange({ ...value, photo: undefined });
+      return;
+    }
+    const err = validateImageFile(file);
+    if (err === "type") {
+      setPhotoError(t("upload.invalidType"));
+      e.target.value = "";
+      return;
+    }
+    if (err === "size") {
+      setPhotoError(t("upload.tooLarge"));
+      e.target.value = "";
+      return;
+    }
+    setPhotoError("");
+    setPreview(URL.createObjectURL(file));
+    onChange({ ...value, photo: file });
   }
 
   return (
@@ -75,7 +94,7 @@ export function VisitItemForm({ value, onChange }: Props) {
 
       <div className="space-y-1.5">
         <span className="text-sm font-medium">{t("placeForm.coverPhoto")}</span>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        <input ref={fileRef} type="file" accept={ALLOWED_IMAGE_ACCEPT} className="hidden" onChange={handleFile} />
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
@@ -110,6 +129,7 @@ export function VisitItemForm({ value, onChange }: Props) {
             {t("placeForm.removePhoto")}
           </button>
         )}
+        {photoError && <p className="text-xs text-red-500">{photoError}</p>}
       </div>
 
     </div>

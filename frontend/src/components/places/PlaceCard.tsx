@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { Place } from "../../types/place";
 import { Badge } from "../ui/Badge";
+import { sanitizeUrl } from "../../utils/url";
 
 export function PlaceCard({ place, index = 0 }: { place: Place; index?: number }) {
   const { t } = useTranslation();
@@ -51,9 +52,9 @@ export function PlaceCard({ place, index = 0 }: { place: Place; index?: number }
         </Link>
 
         <div className="flex flex-wrap gap-2">
-          {place.instagram_url && (
+          {sanitizeUrl(place.instagram_url) && (
             <a
-              href={place.instagram_url}
+              href={sanitizeUrl(place.instagram_url)}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-text transition hover:bg-surface"
@@ -69,9 +70,9 @@ export function PlaceCard({ place, index = 0 }: { place: Place; index?: number }
             </a>
           )}
 
-          {place.maps_url && (
+          {sanitizeUrl(place.maps_url) && (
             <a
-              href={place.maps_url}
+              href={sanitizeUrl(place.maps_url)}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-text transition hover:bg-surface"

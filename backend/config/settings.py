@@ -193,18 +193,30 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
     "http://localhost:5173,http://localhost:8080",
 ).split(",")
 
+# Limite de tamanho de upload: protege contra request bodies gigantes.
+# Arquivos maiores que 10 MB são rejeitados antes de chegar nos serializers.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024  # 15 MB (inclui fields não-arquivo)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB (spool em memória)
+
 LOGGING = {
     "version": 1,
-    "disable_patterns": "django.template.loader.TemplateDoesNotExist",
+    "disable_existing_loggers": False,
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
         },
     },
     "loggers": {
+        # Loga queries SQL apenas em modo DEBUG — jamais em produção
         "django.db.backends": {
             "handlers": ["console"],
-            "level": "DEBUG",
+            "level": "DEBUG" if DEBUG else "WARNING",
+            "propagate": False,
+        },
+        # Nunca loga headers de Authorization, cookies ou tokens
+        "django.security": {
+            "handlers": ["console"],
+            "level": "INFO",
             "propagate": False,
         },
     },

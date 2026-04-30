@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from core import messages
 from core.storage_urls import build_public_media_url
+from core.validators import validate_image_upload
 from .models import UserProfile
 
 User = get_user_model()
@@ -40,7 +41,12 @@ class UserSerializer(serializers.ModelSerializer):
         max_length=150,
     )
     nickname = serializers.CharField(required=False, allow_blank=True, max_length=80)
-    profile_photo = serializers.FileField(required=False, allow_null=True, write_only=True)
+    profile_photo = serializers.ImageField(
+        required=False,
+        allow_null=True,
+        write_only=True,
+        validators=[validate_image_upload],
+    )
     profile_photo_url = serializers.SerializerMethodField()
 
     class Meta:

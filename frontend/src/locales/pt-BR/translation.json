@@ -191,5 +191,9 @@
     "back": "Voltar",
     "na": "N/A",
     "photo": "Foto"
+  },
+  "upload": {
+    "invalidType": "Formato não permitido. Use JPEG, PNG ou WEBP.",
+    "tooLarge": "Imagem muito grande. Tamanho máximo: 10 MB."
   }
 }

@@ -52,6 +52,8 @@ class MeView(generics.RetrieveUpdateAPIView):
 
 class PasswordChangeView(generics.GenericAPIView):
     serializer_class = PasswordChangeSerializer
+    throttle_classes = [AuthRateThrottle]
+    throttle_scope = "auth"
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)

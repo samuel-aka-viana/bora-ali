@@ -16,4 +16,7 @@ INVALID_EMAIL = _("Informe um e-mail valido.")
 EMAIL_ALREADY_EXISTS = _("Esse e-mail ja esta sendo usado por outro usuario.")
 PASSWORDS_DO_NOT_MATCH = _("As senhas nao coincidem.")
 RESOURCE_NOT_FOUND = _("Recurso nao encontrado.")
+INVALID_IMAGE = _("Arquivo de imagem invalido ou nao suportado.")
+IMAGE_TOO_LARGE = _("Imagem muito grande. Tamanho maximo permitido: 10 MB.")
+UNSAFE_URL = _("URL invalida. Apenas http e https sao permitidos.")
 

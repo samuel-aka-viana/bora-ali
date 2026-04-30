@@ -2,6 +2,7 @@ import { useState, type ChangeEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { authService } from "../services/auth.service";
 import { getApiErrorState } from "../services/api-errors";
+import { validateImageFile, ALLOWED_IMAGE_ACCEPT } from "../utils/url";
 import { useAuth } from "../contexts/useAuth";
 import { BackButton } from "../components/ui/BackButton";
 import { Button } from "../components/ui/Button";
@@ -30,8 +31,25 @@ export default function AccountPage() {
 
   const onPhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
+    if (!file) {
+      setPhoto(null);
+      setPhotoPreview(user?.profile_photo_url ?? "");
+      return;
+    }
+    const err = validateImageFile(file);
+    if (err === "type") {
+      setProfileFieldErrors((prev) => ({ ...prev, profile_photo: t("upload.invalidType") }));
+      event.target.value = "";
+      return;
+    }
+    if (err === "size") {
+      setProfileFieldErrors((prev) => ({ ...prev, profile_photo: t("upload.tooLarge") }));
+      event.target.value = "";
+      return;
+    }
+    setProfileFieldErrors((prev) => ({ ...prev, profile_photo: "" }));
     setPhoto(file);
-    setPhotoPreview(file ? URL.createObjectURL(file) : user?.profile_photo_url ?? "");
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   return (
@@ -83,7 +101,7 @@ export default function AccountPage() {
             )}
             <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-text shadow-sm transition hover:border-muted/50 hover:bg-background">
               {t("account.profile.changePhoto")}
-              <input type="file" accept="image/*" className="sr-only" onChange={onPhotoChange} />
+              <input type="file" accept={ALLOWED_IMAGE_ACCEPT} className="sr-only" onChange={onPhotoChange} />
             </label>
           </div>
 

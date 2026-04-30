@@ -9,6 +9,7 @@ import { Button } from "../ui/Button";
 import { ErrorMessage } from "../ui/ErrorMessage";
 import { LocationPicker } from "../ui/LocationPicker";
 import { getApiErrorState } from "../../services/api-errors";
+import { validateImageFile, ALLOWED_IMAGE_ACCEPT } from "../../utils/url";
 
 type PlacePayload = Partial<Omit<Place, "cover_photo">> & { cover_photo?: string | File };
 
@@ -31,8 +32,25 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
+    if (!file) {
+      setCoverFile(null);
+      setPreview(initial.cover_photo ?? null);
+      return;
+    }
+    const err = validateImageFile(file);
+    if (err === "type") {
+      setFieldErrors({ cover_photo: t("upload.invalidType") });
+      e.target.value = "";
+      return;
+    }
+    if (err === "size") {
+      setFieldErrors({ cover_photo: t("upload.tooLarge") });
+      e.target.value = "";
+      return;
+    }
+    setFieldErrors({});
     setCoverFile(file);
-    setPreview(file ? URL.createObjectURL(file) : (initial.cover_photo ?? null));
+    setPreview(URL.createObjectURL(file));
   }
 
   return (
@@ -89,7 +107,7 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
 
       <div className="space-y-1.5">
         <span className="text-sm font-medium">{t("placeForm.coverPhoto")}</span>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        <input ref={fileRef} type="file" accept={ALLOWED_IMAGE_ACCEPT} className="hidden" onChange={handleFile} />
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
@@ -124,6 +142,7 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
             {t("placeForm.removePhoto")}
           </button>
         )}
+        {fieldErrors.cover_photo && <ErrorMessage message={fieldErrors.cover_photo} />}
       </div>
 
       {submitError && <ErrorMessage message={submitError} />}

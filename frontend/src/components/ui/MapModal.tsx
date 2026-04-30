@@ -1,4 +1,5 @@
 import { Modal } from "./Modal";
+import { sanitizeUrl } from "../../utils/url";
 
 type Props = {
   open: boolean;
@@ -27,9 +28,9 @@ export function MapModal({ open, onClose, name, latitude, longitude, mapsUrl }: 
             className="block"
           />
         </div>
-        {mapsUrl && (
+        {sanitizeUrl(mapsUrl) && (
           <a
-            href={mapsUrl}
+            href={sanitizeUrl(mapsUrl)}
             target="_blank"
             rel="noreferrer"
             className="flex items-center justify-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text transition hover:bg-background"

@@ -4,6 +4,7 @@ from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
 
 from core.storage_urls import build_public_media_url
+from core.validators import validate_image_upload, validate_safe_url
 from .models import Place, Visit, VisitItem
 
 
@@ -46,6 +47,9 @@ class VisitItemSerializer(FlexFieldsModelSerializer):
 
 
 class VisitItemWriteSerializer(FlexFieldsModelSerializer):
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=5000)
+    photo = serializers.ImageField(required=False, allow_null=True, validators=[validate_image_upload])
+
     class Meta:
         model = VisitItem
         fields = (
@@ -124,6 +128,9 @@ class VisitExpandSerializer(FlexFieldsModelSerializer):
 
 
 class VisitWriteSerializer(FlexFieldsModelSerializer):
+    general_notes = serializers.CharField(required=False, allow_blank=True, max_length=5000)
+    photo = serializers.ImageField(required=False, allow_null=True, validators=[validate_image_upload])
+
     class Meta:
         model = Visit
         fields = (
@@ -223,6 +230,9 @@ class PlaceDetailSerializer(FlexFieldsModelSerializer):
 
 
 class PlaceWriteSerializer(FlexFieldsModelSerializer):
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=5000)
+    cover_photo = serializers.ImageField(required=False, allow_null=True, validators=[validate_image_upload])
+
     class Meta:
         model = Place
         fields = (
@@ -239,6 +249,12 @@ class PlaceWriteSerializer(FlexFieldsModelSerializer):
             "cover_photo",
         )
         read_only_fields = ("public_id",)
+
+    def validate_instagram_url(self, value):
+        return validate_safe_url(value)
+
+    def validate_maps_url(self, value):
+        return validate_safe_url(value)
 
     def _sync_coords(self, validated_data: dict) -> dict:
         has_manual_coords = (

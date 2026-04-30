@@ -11,6 +11,7 @@ import { VisitCard } from "../components/visits/VisitCard";
 import { BackButton } from "../components/ui/BackButton";
 import { MapModal } from "../components/ui/MapModal";
 import { fmtPrice, fmtRating } from "../utils/formatters";
+import { sanitizeUrl } from "../utils/url";
 
 export default function PlaceDetailPage() {
   const { t } = useTranslation();
@@ -79,9 +80,9 @@ export default function PlaceDetailPage() {
             )}
 
             <div className="flex flex-wrap gap-2">
-              {place.instagram_url && (
+              {sanitizeUrl(place.instagram_url) && (
                 <a
-                  href={place.instagram_url}
+                  href={sanitizeUrl(place.instagram_url)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text transition hover:bg-background"
@@ -109,9 +110,9 @@ export default function PlaceDetailPage() {
                 </button>
               )}
 
-              {place.maps_url && !place.latitude && (
+              {sanitizeUrl(place.maps_url) && !place.latitude && (
                 <a
-                  href={place.maps_url}
+                  href={sanitizeUrl(place.maps_url)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text transition hover:bg-background"

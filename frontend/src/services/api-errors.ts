@@ -26,6 +26,22 @@ export function getApiErrorState(error: unknown, fallbackMessage: string): ApiEr
     return { message: fallbackMessage, fieldErrors: {} };
   }
 
+  const status = error.response?.status;
+  if (status === 413) {
+    return {
+      code: "payload_too_large",
+      message: "Arquivo muito grande. Reduza o tamanho da imagem (máximo 10 MB) e tente novamente.",
+      fieldErrors: {},
+    };
+  }
+  if (status === 429) {
+    return {
+      code: "throttled",
+      message: "Muitas tentativas. Aguarde alguns instantes e tente novamente.",
+      fieldErrors: {},
+    };
+  }
+
   const data = error.response?.data;
   if (!data || typeof data !== "object") {
     return { message: fallbackMessage, fieldErrors: {} };
