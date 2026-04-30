@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bora_ali
+      POSTGRES_USER: bora
+      POSTGRES_PASSWORD: bora
+    ports:
+      - "5432:5432"
+    volumes:
+      - bora_ali_pgdata:/var/lib/postgresql/data
+volumes:
+  bora_ali_pgdata:
