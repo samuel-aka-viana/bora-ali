@@ -1,19 +1,20 @@
 export const PLACE_STATUSES = [
-  { value: "want_to_visit", label: "Want to visit" },
-  { value: "visited", label: "Visited" },
-  { value: "favorite", label: "Favorite" },
-  { value: "would_not_return", label: "Would not return" },
+  { value: "want_to_visit" },
+  { value: "visited" },
+  { value: "favorite" },
+  { value: "would_not_return" },
 ] as const;
 
 export const VISIT_ITEM_TYPES = [
-  { value: "sweet", label: "Sweet" },
-  { value: "savory", label: "Savory" },
-  { value: "drink", label: "Drink" },
-  { value: "coffee", label: "Coffee" },
-  { value: "juice", label: "Juice" },
-  { value: "dessert", label: "Dessert" },
-  { value: "other", label: "Other" },
+  { value: "sweet" },
+  { value: "savory" },
+  { value: "drink" },
+  { value: "coffee" },
+  { value: "juice" },
+  { value: "dessert" },
+  { value: "other" },
 ] as const;
 
 export const ACCESS_KEY = "boraali_access";
 export const REFRESH_KEY = "boraali_refresh";
+export const SESSION_INVALIDATED_KEY = "boraali_session_invalidated";

@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from core import messages
+
 User = get_user_model()
 
 
@@ -15,7 +17,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs["password"] != attrs.pop("confirm_password"):
-            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+            raise serializers.ValidationError(
+                {"confirm_password": str(messages.PASSWORDS_DO_NOT_MATCH)}
+            )
+        if User.objects.filter(email__iexact=attrs["email"]).exists():
+            raise serializers.ValidationError(
+                {"email": str(messages.EMAIL_ALREADY_EXISTS)}
+            )
         return attrs
 
     def create(self, validated_data):

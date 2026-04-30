@@ -1,9 +1,10 @@
 from rest_framework import serializers
+from rest_flex_fields import FlexFieldsModelSerializer
 
 from .models import Place, Visit, VisitItem
 
 
-class VisitItemSerializer(serializers.ModelSerializer):
+class VisitItemSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = VisitItem
         fields = (
@@ -23,7 +24,7 @@ class VisitItemSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "visit", "created_at", "updated_at")
 
 
-class VisitItemWriteSerializer(serializers.ModelSerializer):
+class VisitItemWriteSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = VisitItem
         fields = (
@@ -38,7 +39,7 @@ class VisitItemWriteSerializer(serializers.ModelSerializer):
         )
 
 
-class VisitSerializer(serializers.ModelSerializer):
+class VisitSerializer(FlexFieldsModelSerializer):
     items = VisitItemSerializer(many=True, read_only=True)
 
     class Meta:
@@ -59,9 +60,43 @@ class VisitSerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = ("id", "place", "items", "created_at", "updated_at")
+        expandable_fields = {
+            "place": ("places.serializers.PlaceListSerializer", {"read_only": True}),
+            "items": (
+                "places.serializers.VisitItemSerializer",
+                {"many": True, "read_only": True},
+            ),
+        }
 
 
-class VisitWriteSerializer(serializers.ModelSerializer):
+class VisitExpandSerializer(FlexFieldsModelSerializer):
+    class Meta:
+        model = Visit
+        fields = (
+            "id",
+            "place",
+            "visited_at",
+            "environment_rating",
+            "service_rating",
+            "overall_rating",
+            "would_return",
+            "general_notes",
+            "photo",
+            "photo_path",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+        expandable_fields = {
+            "place": ("places.serializers.PlaceListSerializer", {"read_only": True}),
+            "items": (
+                "places.serializers.VisitItemSerializer",
+                {"many": True, "read_only": True},
+            ),
+        }
+
+
+class VisitWriteSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = Visit
         fields = (
@@ -76,7 +111,7 @@ class VisitWriteSerializer(serializers.ModelSerializer):
         )
 
 
-class PlaceListSerializer(serializers.ModelSerializer):
+class PlaceListSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = Place
         fields = (
@@ -89,9 +124,15 @@ class PlaceListSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+        expandable_fields = {
+            "visits": (
+                "places.serializers.VisitExpandSerializer",
+                {"many": True, "read_only": True},
+            ),
+        }
 
 
-class PlaceDetailSerializer(serializers.ModelSerializer):
+class PlaceDetailSerializer(FlexFieldsModelSerializer):
     visits = VisitSerializer(many=True, read_only=True)
     consumables_count = serializers.SerializerMethodField()
     average_consumable_rating = serializers.SerializerMethodField()
@@ -116,9 +157,19 @@ class PlaceDetailSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+        expandable_fields = {
+            "visits": (
+                "places.serializers.VisitSerializer",
+                {"many": True, "read_only": True},
+            ),
+        }
 
     def _visit_items(self, obj):
-        return [item for visit in obj.visits.all() for item in visit.items.all()]
+        cached_items = getattr(obj, "_cached_visit_items", None)
+        if cached_items is None:
+            cached_items = [item for visit in obj.visits.all() for item in visit.items.all()]
+            obj._cached_visit_items = cached_items
+        return cached_items
 
     def get_consumables_count(self, obj):
         return len(self._visit_items(obj))
@@ -140,7 +191,7 @@ class PlaceDetailSerializer(serializers.ModelSerializer):
         return f"{sum(prices):.2f}"
 
 
-class PlaceWriteSerializer(serializers.ModelSerializer):
+class PlaceWriteSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = Place
         fields = (

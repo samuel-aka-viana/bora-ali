@@ -1,6 +1,9 @@
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+from .managers import PlaceQuerySet, VisitItemQuerySet, VisitQuerySet
 
 
 class TimeStampedModel(models.Model):
@@ -16,23 +19,25 @@ class TimeStampedModel(models.Model):
 
 
 class PlaceStatus(models.TextChoices):
-    WANT_TO_VISIT = "want_to_visit", "Want to visit"
-    VISITED = "visited", "Visited"
-    FAVORITE = "favorite", "Favorite"
-    WOULD_NOT_RETURN = "would_not_return", "Would not return"
+    WANT_TO_VISIT = "want_to_visit", _("Want to visit")
+    VISITED = "visited", _("Visited")
+    FAVORITE = "favorite", _("Favorite")
+    WOULD_NOT_RETURN = "would_not_return", _("Would not return")
 
 
 class VisitItemType(models.TextChoices):
-    SWEET = "sweet", "Sweet"
-    SAVORY = "savory", "Savory"
-    DRINK = "drink", "Drink"
-    COFFEE = "coffee", "Coffee"
-    JUICE = "juice", "Juice"
-    DESSERT = "dessert", "Dessert"
-    OTHER = "other", "Other"
+    SWEET = "sweet", _("Sweet")
+    SAVORY = "savory", _("Savory")
+    DRINK = "drink", _("Drink")
+    COFFEE = "coffee", _("Coffee")
+    JUICE = "juice", _("Juice")
+    DESSERT = "dessert", _("Dessert")
+    OTHER = "other", _("Other")
 
 
 class Place(TimeStampedModel):
+    objects = PlaceQuerySet.as_manager()
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -80,6 +85,8 @@ class Place(TimeStampedModel):
 
 
 class Visit(TimeStampedModel):
+    objects = VisitQuerySet.as_manager()
+
     place = models.ForeignKey(
         Place,
         on_delete=models.CASCADE,
@@ -143,6 +150,8 @@ class Visit(TimeStampedModel):
 
 
 class VisitItem(TimeStampedModel):
+    objects = VisitItemQuerySet.as_manager()
+
     visit = models.ForeignKey(
         Visit,
         on_delete=models.CASCADE,

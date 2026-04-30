@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { placesService, type PlaceWithVisits } from "../services/places.service";
 import { visitsService } from "../services/visits.service";
 import { Card } from "../components/ui/Card";
@@ -8,9 +9,11 @@ import { Badge } from "../components/ui/Badge";
 import { LoadingState } from "../components/ui/LoadingState";
 import { VisitCard } from "../components/visits/VisitCard";
 import { BackButton } from "../components/ui/BackButton";
+import { LanguageToggle } from "../components/ui/LanguageToggle";
 import { fmtPrice, fmtRating } from "../utils/formatters";
 
 export default function PlaceDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const nav = useNavigate();
   const [place, setPlace] = useState<PlaceWithVisits | null>(null);
@@ -25,7 +28,10 @@ export default function PlaceDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <BackButton />
+      <div className="flex items-center justify-between gap-3">
+        <BackButton />
+        <LanguageToggle />
+      </div>
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 min-w-0">
@@ -38,7 +44,7 @@ export default function PlaceDetailPage() {
           <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0">
             <Link to={`/places/${place.id}/edit`} className="flex-1 sm:flex-none">
               <Button variant="secondary" size="sm" className="w-full sm:w-auto">
-                Edit
+                {t("placeDetail.edit")}
               </Button>
             </Link>
             <Button
@@ -50,65 +56,65 @@ export default function PlaceDetailPage() {
                 nav("/places");
               }}
             >
-              Delete
+              {t("placeDetail.delete")}
             </Button>
           </div>
         </div>
         {place.address && <p className="mt-2 text-muted text-sm">{place.address}</p>}
         {place.instagram_url && (
           <a href={place.instagram_url} className="text-primary text-sm block mt-1" target="_blank" rel="noreferrer">
-            Instagram
+            {t("placeDetail.instagram")}
           </a>
         )}
         {place.maps_url && (
           <a href={place.maps_url} className="text-primary text-sm block mt-1" target="_blank" rel="noreferrer">
-            Maps
+            {t("placeDetail.maps")}
           </a>
         )}
         {place.notes && <p className="mt-2 text-sm">{place.notes}</p>}
       </Card>
 
       <Card>
-        <h2 className="text-lg font-semibold">Consumables summary</h2>
+        <h2 className="text-lg font-semibold">{t("placeDetail.consumables.title")}</h2>
         {hasConsumables ? (
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
-              <p className="text-xs uppercase text-muted">Items logged</p>
+              <p className="text-xs uppercase text-muted">{t("placeDetail.consumables.items")}</p>
               <p className="text-xl font-semibold">{place.consumables_count}</p>
             </div>
             <div>
-              <p className="text-xs uppercase text-muted">Average item rating</p>
+              <p className="text-xs uppercase text-muted">{t("placeDetail.consumables.avgRating")}</p>
               <p className="text-xl font-semibold">
                 {place.average_consumable_rating == null
-                  ? "N/A"
+                  ? t("common.na")
                   : fmtRating(place.average_consumable_rating)}
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase text-muted">Total spent</p>
+              <p className="text-xs uppercase text-muted">{t("placeDetail.consumables.totalSpent")}</p>
               <p className="text-xl font-semibold">
                 {place.total_consumed_amount == null
-                  ? "N/A"
+                  ? t("common.na")
                   : fmtPrice(place.total_consumed_amount)}
               </p>
             </div>
           </div>
         ) : (
-          <p className="mt-2 text-sm text-muted">
-            Add a visit with food or drinks consumed to track prices, comments, and average ratings.
-          </p>
+          <p className="mt-2 text-sm text-muted">{t("placeDetail.consumables.empty")}</p>
         )}
       </Card>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl font-semibold">Visits ({place.visits.length})</h2>
+        <h2 className="text-xl font-semibold">
+          {t("placeDetail.visits.title", { count: place.visits.length })}
+        </h2>
         <Link to={`/places/${place.id}/visits/new`} className="w-full sm:w-auto">
-          <Button size="sm" className="w-full sm:w-auto">+ Add visit</Button>
+          <Button size="sm" className="w-full sm:w-auto">{t("placeDetail.visits.add")}</Button>
         </Link>
       </div>
 
       {place.visits.length === 0 ? (
-        <p className="text-muted text-sm text-center py-6">No visits yet.</p>
+        <p className="text-muted text-sm text-center py-6">{t("placeDetail.visits.empty")}</p>
       ) : (
         place.visits.map((v) => (
           <VisitCard

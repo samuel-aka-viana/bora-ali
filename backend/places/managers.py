@@ -1,0 +1,72 @@
+from __future__ import annotations
+
+from collections.abc import Iterable
+
+from django.db import models
+from django.db.models import Prefetch
+
+
+def parse_expands(raw_value: str | Iterable[str] | None) -> set[str]:
+    if raw_value is None:
+        return set()
+    if isinstance(raw_value, str):
+        return {item.strip() for item in raw_value.split(",") if item.strip()}
+    return {str(item).strip() for item in raw_value if str(item).strip()}
+
+
+class PlaceQuerySet(models.QuerySet):
+    def for_user(self, user):
+        return self.filter(user=user)
+
+    def with_list_expansion(self, expands: str | Iterable[str] | None):
+        expand_set = parse_expands(expands)
+
+        if "visits.items" in expand_set:
+            from .models import Visit, VisitItem
+
+            visit_items_queryset = VisitItem.objects.order_by("-created_at")
+            visits_queryset = Visit.objects.order_by("-visited_at").prefetch_related(
+                Prefetch("items", queryset=visit_items_queryset)
+            )
+            return self.prefetch_related(Prefetch("visits", queryset=visits_queryset))
+
+        if "visits" in expand_set:
+            from .models import Visit
+
+            visits_queryset = Visit.objects.order_by("-visited_at")
+            return self.prefetch_related(Prefetch("visits", queryset=visits_queryset))
+
+        return self
+
+    def with_detail_payload(self):
+        from .models import Visit, VisitItem
+
+        visit_items_queryset = VisitItem.objects.order_by("-created_at")
+        visits_queryset = Visit.objects.order_by("-visited_at").prefetch_related(
+            Prefetch("items", queryset=visit_items_queryset)
+        )
+        return self.prefetch_related(Prefetch("visits", queryset=visits_queryset))
+
+
+class VisitQuerySet(models.QuerySet):
+    def for_user(self, user):
+        return self.filter(place__user=user)
+
+    def with_expansion(self, expands: str | Iterable[str] | None):
+        expand_set = parse_expands(expands)
+        if "place" in expand_set:
+            return self.select_related("place")
+        return self
+
+
+class VisitItemQuerySet(models.QuerySet):
+    def for_user(self, user):
+        return self.filter(visit__place__user=user)
+
+    def with_expansion(self, expands: str | Iterable[str] | None):
+        expand_set = parse_expands(expands)
+        if "visit.place" in expand_set:
+            return self.select_related("visit", "visit__place")
+        if "visit" in expand_set:
+            return self.select_related("visit")
+        return self

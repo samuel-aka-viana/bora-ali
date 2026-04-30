@@ -1,0 +1,101 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bora_ali}
+      POSTGRES_USER: ${POSTGRES_USER:-bora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bora}
+    volumes:
+      - bora_ali_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bora} -d ${POSTGRES_DB:-bora_ali}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4318:4318"    # OTLP HTTP
+
+  storage:
+    image: ghcr.io/versity/versitygw:v1.4.1
+    restart: unless-stopped
+    environment:
+      ROOT_ACCESS_KEY: ${VERSITYGW_ACCESS_KEY:-versity}
+      ROOT_SECRET_KEY: ${VERSITYGW_SECRET_KEY:-versity123}
+      VGW_PORT: ":7070"
+      VGW_BACKEND: posix
+      VGW_BACKEND_ARGS: /data
+      VGW_WEBUI_PORT: ":7071"
+      VGW_WEBUI_NO_TLS: "true"
+      VGW_CORS_ALLOW_ORIGIN: "*"
+    volumes:
+      - bora_ali_storage:/data
+    ports:
+      - "8081:7070"  # S3 API (browser access para media)
+      - "8082:7071"  # WebGUI
+    depends_on:
+      init-storage:
+        condition: service_completed_successfully
+
+  init-storage:
+    image: alpine:3.19
+    volumes:
+      - bora_ali_storage:/data
+    command: mkdir -p /data/${AWS_STORAGE_BUCKET_NAME:-bora-ali}
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-changeme-in-production}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      POSTGRES_DB: ${POSTGRES_DB:-bora_ali}
+      POSTGRES_USER: ${POSTGRES_USER:-bora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bora}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
+      USE_VERSITYGW: "True"
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-bora-ali}
+      AWS_S3_ENDPOINT_URL: http://storage:7070
+      AWS_S3_REGION_NAME: us-east-1
+      AWS_S3_USE_SSL: "False"
+      AWS_ACCESS_KEY_ID: ${VERSITYGW_ACCESS_KEY:-versity}
+      AWS_SECRET_ACCESS_KEY: ${VERSITYGW_SECRET_KEY:-versity123}
+      OTEL_SERVICE_NAME: bora-ali
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+    depends_on:
+      postgres:
+        condition: service_healthy
+      storage:
+        condition: service_started
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py compilemessages &&
+             gunicorn config.wsgi:application -b 0.0.0.0:8000 --workers 2 --threads 4"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  bora_ali_pgdata:
+  bora_ali_storage:

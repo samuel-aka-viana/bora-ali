@@ -1,4 +1,6 @@
 import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from model_bakery import baker
 
 pytestmark = pytest.mark.django_db
@@ -59,3 +61,43 @@ def test_detail_includes_consumables_summary(auth_client, user):
     assert r.data["consumables_count"] == 2
     assert r.data["average_consumable_rating"] == 9
     assert r.data["total_consumed_amount"] == "30.50"
+
+
+def test_detail_avoids_n_plus_one_queries(auth_client, user):
+    place = baker.make("places.Place", user=user)
+    visits = baker.make("places.Visit", place=place, _quantity=3)
+    for visit in visits:
+        baker.make("places.VisitItem", visit=visit, _quantity=4)
+
+    with CaptureQueriesContext(connection) as queries:
+        r = auth_client.get(f"/api/places/{place.id}/")
+
+    assert r.status_code == 200
+    assert len(queries) == 3
+
+
+def test_list_can_expand_visits(auth_client, user):
+    place = baker.make("places.Place", user=user)
+    baker.make("places.Visit", place=place)
+
+    r = auth_client.get("/api/places/?expand=visits")
+
+    assert r.status_code == 200
+    assert "visits" in r.data["results"][0]
+    assert len(r.data["results"][0]["visits"]) == 1
+
+
+def test_list_expand_visits_items_avoids_n_plus_one(auth_client, user):
+    places = baker.make("places.Place", user=user, _quantity=5)
+    for place in places:
+        visits = baker.make("places.Visit", place=place, _quantity=2)
+        for visit in visits:
+            baker.make("places.VisitItem", visit=visit, _quantity=2)
+
+    with CaptureQueriesContext(connection) as queries:
+        r = auth_client.get("/api/places/?expand=visits.items")
+
+    assert r.status_code == 200
+    assert len(r.data["results"]) == 5
+    assert "items" in r.data["results"][0]["visits"][0]
+    assert len(queries) <= 7

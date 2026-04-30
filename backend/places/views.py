@@ -1,9 +1,11 @@
-from rest_framework import mixins, status, viewsets
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from core.viewsets import ViewSetBase, WriteViewSetBase
 from .filters import PlaceFilter, VisitFilter, VisitItemFilter
 from .models import Place, Visit, VisitItem
+from .params_serializers import PlaceVisitParamsSerializer, VisitItemParamsSerializer
 from .serializers import (
     PlaceDetailSerializer,
     PlaceListSerializer,
@@ -15,52 +17,66 @@ from .serializers import (
 )
 
 
-class PlaceViewSet(viewsets.ModelViewSet):
+class PlaceViewSet(ViewSetBase):
+    queryset = Place.objects.all()
     filterset_class = PlaceFilter
     search_fields = ("name", "category", "address")
     ordering_fields = ("created_at", "updated_at", "name")
+    serializer_class = PlaceListSerializer
+    serializer_action_classes = {
+        "create": PlaceWriteSerializer,
+        "update": PlaceWriteSerializer,
+        "partial_update": PlaceWriteSerializer,
+        "retrieve": PlaceDetailSerializer,
+    }
+    action_param_serializers = {
+        "add_visit": PlaceVisitParamsSerializer,
+    }
 
     def get_queryset(self):
-        queryset = Place.objects.filter(user=self.request.user)
+        expand_param = self.request.query_params.get("expand")
+        queryset = Place.objects.for_user(self.request.user)
+        if self.action == "list":
+            return queryset.with_list_expansion(expand_param)
         if self.action == "retrieve":
-            return queryset.prefetch_related("visits__items")
+            return queryset.with_detail_payload()
         return queryset
-
-    def get_serializer_class(self):
-        if self.action in ("create", "update", "partial_update"):
-            return PlaceWriteSerializer
-        if self.action == "retrieve":
-            return PlaceDetailSerializer
-        return PlaceListSerializer
 
     @action(detail=True, methods=["post"], url_path="visits")
     def add_visit(self, request, pk=None):
         place = self.get_object()
-        serializer = VisitWriteSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        visit = serializer.save(place=place)
+        validated_data = self.validate_action_params(request)
+        visit = Visit.objects.create(place=place, **validated_data)
         return Response(VisitSerializer(visit).data, status=status.HTTP_201_CREATED)
 
 
-class VisitViewSet(mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class VisitViewSet(WriteViewSetBase):
+    queryset = Visit.objects.all()
     serializer_class = VisitWriteSerializer
     filterset_class = VisitFilter
+    action_param_serializers = {
+        "add_item": VisitItemParamsSerializer,
+    }
 
     def get_queryset(self):
-        return Visit.objects.filter(place__user=self.request.user)
+        return Visit.objects.for_user(self.request.user).with_expansion(
+            self.request.query_params.get("expand")
+        )
 
     @action(detail=True, methods=["post"], url_path="items")
     def add_item(self, request, pk=None):
         visit = self.get_object()
-        serializer = VisitItemWriteSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        item = serializer.save(visit=visit)
+        validated_data = self.validate_action_params(request)
+        item = VisitItem.objects.create(visit=visit, **validated_data)
         return Response(VisitItemSerializer(item).data, status=status.HTTP_201_CREATED)
 
 
-class VisitItemViewSet(mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class VisitItemViewSet(WriteViewSetBase):
+    queryset = VisitItem.objects.all()
     serializer_class = VisitItemWriteSerializer
     filterset_class = VisitItemFilter
 
     def get_queryset(self):
-        return VisitItem.objects.filter(visit__place__user=self.request.user)
+        return VisitItem.objects.for_user(self.request.user).with_expansion(
+            self.request.query_params.get("expand")
+        )

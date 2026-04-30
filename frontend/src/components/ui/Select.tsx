@@ -1,8 +1,11 @@
 import { type SelectHTMLAttributes } from "react";
 
-type Props = SelectHTMLAttributes<HTMLSelectElement> & { label?: string };
+type Props = SelectHTMLAttributes<HTMLSelectElement> & {
+  label?: string;
+  error?: string;
+};
 
-export function Select({ label, children, id, ...rest }: Props) {
+export function Select({ label, error, children, id, ...rest }: Props) {
   const selectId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
   return (
     <label className="block" htmlFor={selectId}>
@@ -14,6 +17,7 @@ export function Select({ label, children, id, ...rest }: Props) {
       >
         {children}
       </select>
+      {error && <span className="text-danger text-xs mt-1 block">{error}</span>}
     </label>
   );
 }

@@ -4,8 +4,13 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from core.exceptions import InvalidTokenException
 from .serializers import RegisterSerializer, UserSerializer
 from .throttles import AuthRateThrottle
+from .token_serializers import (
+    SingleSessionTokenObtainPairSerializer,
+    SingleSessionTokenRefreshSerializer,
+)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -16,11 +21,13 @@ class RegisterView(generics.CreateAPIView):
 
 
 class ThrottledLoginView(TokenObtainPairView):
+    serializer_class = SingleSessionTokenObtainPairSerializer
     throttle_classes = [AuthRateThrottle]
     throttle_scope = "auth"
 
 
 class ThrottledRefreshView(TokenRefreshView):
+    serializer_class = SingleSessionTokenRefreshSerializer
     throttle_classes = [AuthRateThrottle]
     throttle_scope = "auth"
 
@@ -32,7 +39,7 @@ class LogoutView(APIView):
         try:
             RefreshToken(request.data["refresh"]).blacklist()
         except Exception:
-            return Response({"detail": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
+            raise InvalidTokenException
         return Response(status=status.HTTP_205_RESET_CONTENT)
 
 

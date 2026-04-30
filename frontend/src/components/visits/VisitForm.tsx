@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { Visit } from "../../types/visit";
 import type { VisitItem } from "../../types/visit-item";
 import { DateTimePicker } from "../ui/DateTimePicker";
@@ -6,6 +7,8 @@ import { Textarea } from "../ui/Textarea";
 import { RatingInput } from "../ui/RatingInput";
 import { Button } from "../ui/Button";
 import { VisitItemForm } from "./VisitItemForm";
+import { ErrorMessage } from "../ui/ErrorMessage";
+import { getApiErrorState } from "../../services/api-errors";
 
 type VisitPayload = Partial<Omit<Visit, "photo">> & { photo?: string | File };
 type ItemPayload = Partial<Omit<VisitItem, "photo">> & { photo?: string | File };
@@ -17,6 +20,7 @@ type Props = {
 };
 
 export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) {
+  const { t } = useTranslation();
   const [v, setV] = useState<Partial<Visit>>({
     visited_at: new Date().toISOString().slice(0, 16),
     environment_rating: 7,
@@ -28,6 +32,8 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
   const [items, setItems] = useState<ItemPayload[]>(initialItems);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(initial.photo ?? null);
+  const [submitError, setSubmitError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -40,29 +46,42 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        await onSubmit({ ...v, ...(photoFile ? { photo: photoFile } : {}) }, items);
+        setSubmitError("");
+        setFieldErrors({});
+        try {
+          await onSubmit({ ...v, ...(photoFile ? { photo: photoFile } : {}) }, items);
+        } catch (error) {
+          const apiError = getApiErrorState(error, t("visitForm.saveError"));
+          setSubmitError(apiError.message);
+          setFieldErrors(apiError.fieldErrors);
+        }
       }}
       className="space-y-4"
     >
+      {submitError && <ErrorMessage message={submitError} />}
       <DateTimePicker
-        label="Visited at"
+        label={t("visitForm.visitedAt")}
         value={v.visited_at || ""}
         onChange={(val) => setV({ ...v, visited_at: val })}
+        error={fieldErrors.visited_at}
       />
       <RatingInput
-        label="Environment (0-10)"
+        label={t("visitForm.environmentRating")}
         value={Number(v.environment_rating ?? 0)}
         onChange={(n) => setV({ ...v, environment_rating: n })}
+        error={fieldErrors.environment_rating}
       />
       <RatingInput
-        label="Service (0-10)"
+        label={t("visitForm.serviceRating")}
         value={Number(v.service_rating ?? 0)}
         onChange={(n) => setV({ ...v, service_rating: n })}
+        error={fieldErrors.service_rating}
       />
       <RatingInput
-        label="Overall (0-10)"
+        label={t("visitForm.overallRating")}
         value={Number(v.overall_rating ?? 0)}
         onChange={(n) => setV({ ...v, overall_rating: n })}
+        error={fieldErrors.overall_rating}
       />
       <label className="flex items-center gap-2">
         <input
@@ -70,26 +89,27 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
           checked={!!v.would_return}
           onChange={(e) => setV({ ...v, would_return: e.target.checked })}
         />
-        Would return
+        {t("visitForm.wouldReturn")}
       </label>
       <Textarea
-        label="General notes"
+        label={t("visitForm.generalNotes")}
         value={v.general_notes || ""}
         onChange={(e) => setV({ ...v, general_notes: e.target.value })}
+        error={fieldErrors.general_notes}
       />
 
       <div className="space-y-1">
-        <span className="text-sm font-medium">Photo</span>
+        <span className="text-sm font-medium">{t("visitForm.photo")}</span>
         {preview && (
           <img
             src={preview}
-            alt="Visit photo"
+            alt={t("visitForm.visitPhotoAlt")}
             className="w-full h-40 object-cover rounded-lg border border-border"
           />
         )}
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
         <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
-          {preview ? "Change photo" : "Upload photo"}
+          {preview ? t("placeForm.changePhoto") : t("placeForm.uploadPhoto")}
         </Button>
         {photoFile && (
           <Button
@@ -98,15 +118,15 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
             size="sm"
             onClick={() => { setPhotoFile(null); setPreview(initial.photo ?? null); }}
           >
-            Remove
+            {t("placeForm.removePhoto")}
           </Button>
         )}
       </div>
 
       <div>
         <div className="mb-2">
-          <h3 className="font-semibold">Food and drinks consumed</h3>
-          <p className="text-sm text-muted">Add each consumable with price, rating, and comments.</p>
+          <h3 className="font-semibold">{t("visitForm.consumedTitle")}</h3>
+          <p className="text-sm text-muted">{t("visitForm.consumedDescription")}</p>
         </div>
         <div className="space-y-3">
           {items.map((it, i) => (
@@ -127,11 +147,11 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
             setItems([...items, { type: "other", rating: 7, price: "0", would_order_again: true }])
           }
         >
-          + Add consumable
+          {t("visitForm.addConsumable")}
         </Button>
       </div>
 
-      <Button type="submit" className="w-full">Save visit</Button>
+      <Button type="submit" className="w-full">{t("visitForm.save")}</Button>
     </form>
   );
 }

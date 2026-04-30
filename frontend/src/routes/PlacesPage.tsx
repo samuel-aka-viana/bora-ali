@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { placesService, type Page } from "../services/places.service";
 import type { Place, PlaceStatus } from "../types/place";
 import { PLACE_STATUSES } from "../utils/constants";
@@ -9,9 +10,18 @@ import { Input } from "../components/ui/Input";
 import { EmptyState } from "../components/ui/EmptyState";
 import { LoadingState } from "../components/ui/LoadingState";
 import { ErrorMessage } from "../components/ui/ErrorMessage";
+import { LanguageToggle } from "../components/ui/LanguageToggle";
 import { useAuth } from "../contexts/useAuth";
 
+const STATUS_ICONS: Record<string, string> = {
+  want_to_visit: "👁",
+  visited: "✓",
+  favorite: "★",
+  would_not_return: "✗",
+};
+
 export default function PlacesPage() {
+  const { t } = useTranslation();
   const { logout } = useAuth();
   const [data, setData] = useState<Page<Place> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,29 +31,40 @@ export default function PlacesPage() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    setLoading(true);
     placesService
       .list({ page, search: search || undefined, status: (status as PlaceStatus) || undefined })
       .then(setData)
-      .catch(() => setError("Failed to load places"))
+      .catch(() => setError(t("places.error")))
       .finally(() => setLoading(false));
-  }, [search, status, page]);
+  }, [search, status, page, t]);
 
   return (
-    <div className="max-w-5xl mx-auto p-4 space-y-4">
+    <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Bora Ali</h1>
-        <div className="flex w-full gap-2 sm:w-auto">
+        <div>
+          <h1 className="font-fraunces text-3xl font-bold text-text leading-none">
+            {t("places.title")}
+          </h1>
+          <p className="text-muted text-sm mt-1">{t("places.subtitle")}</p>
+        </div>
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
+          <LanguageToggle />
           <Link to="/places/new" className="flex-1 sm:flex-none">
-            <Button size="sm" className="w-full sm:w-auto">+ New place</Button>
+            <Button size="sm" className="w-full sm:w-auto">
+              {t("places.new")}
+            </Button>
           </Link>
           <Button size="sm" variant="secondary" className="flex-1 sm:flex-none" onClick={logout}>
-            Logout
+            {t("places.logout")}
           </Button>
         </div>
       </div>
 
+      {/* Search */}
       <Input
-        placeholder="Search places..."
+        placeholder={t("places.search")}
         value={search}
         onChange={(e) => {
           setPage(1);
@@ -51,43 +72,58 @@ export default function PlacesPage() {
         }}
       />
 
+      {/* Status filters */}
       <div className="flex gap-2 flex-wrap">
-        <Button
-          size="sm"
-          variant={status === "" ? "primary" : "secondary"}
+        <button
           onClick={() => { setPage(1); setStatus(""); }}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${
+            status === ""
+              ? "bg-primary text-white border-primary shadow-sm"
+              : "bg-surface text-text border-border hover:border-muted/50"
+          }`}
         >
-          All
-        </Button>
+          {t("places.all")}
+        </button>
         {PLACE_STATUSES.map((s) => (
-          <Button
+          <button
             key={s.value}
-            size="sm"
-            variant={status === s.value ? "primary" : "secondary"}
             onClick={() => { setPage(1); setStatus(s.value); }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${
+              status === s.value
+                ? "bg-primary text-white border-primary shadow-sm"
+                : "bg-surface text-text border-border hover:border-muted/50"
+            }`}
           >
-            {s.label}
-          </Button>
+            {STATUS_ICONS[s.value]} {t(`status.${s.value}`)}
+          </button>
         ))}
       </div>
 
+      {/* Content */}
       {loading && <LoadingState />}
       {!loading && error && <ErrorMessage message={error} />}
       {!loading && !error && data?.count === 0 && (
-        <EmptyState title="No places yet" description="Add your first place to get started." />
+        <EmptyState
+          title={t("places.empty.title")}
+          description={t("places.empty.description")}
+        />
       )}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {!loading && !error && data?.results.map((p) => <PlaceCard key={p.id} place={p} />)}
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {!loading && !error && data?.results.map((p, i) => (
+          <PlaceCard key={p.id} place={p} index={i} />
+        ))}
       </div>
 
+      {/* Pagination */}
       {data && (data.next || data.previous) && (
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 pt-2">
           <Button variant="secondary" disabled={!data.previous} onClick={() => setPage((n) => n - 1)}>
-            Previous
+            {t("places.previous")}
           </Button>
-          <span className="text-muted text-sm text-center">Page {page}</span>
+          <span className="text-muted text-sm">{t("places.page", { page })}</span>
           <Button variant="secondary" disabled={!data.next} onClick={() => setPage((n) => n + 1)}>
-            Next
+            {t("places.next")}
           </Button>
         </div>
       )}

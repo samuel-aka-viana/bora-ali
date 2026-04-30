@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "./Button";
 
 type Props = {
@@ -6,8 +7,9 @@ type Props = {
   label?: string;
 };
 
-export function BackButton({ fallbackTo = "/places", label = "Back" }: Props) {
+export function BackButton({ fallbackTo = "/places", label }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <Button
@@ -24,7 +26,7 @@ export function BackButton({ fallbackTo = "/places", label = "Back" }: Props) {
       }}
     >
       <span aria-hidden="true">&larr;</span>
-      {label}
+      {label || t("common.back")}
     </Button>
   );
 }

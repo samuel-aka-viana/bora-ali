@@ -1,8 +1,11 @@
 import { type TextareaHTMLAttributes } from "react";
 
-type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string };
+type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  label?: string;
+  error?: string;
+};
 
-export function Textarea({ label, id, ...rest }: Props) {
+export function Textarea({ label, error, id, ...rest }: Props) {
   const textareaId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
   return (
     <label className="block" htmlFor={textareaId}>
@@ -12,6 +15,7 @@ export function Textarea({ label, id, ...rest }: Props) {
         {...rest}
         className="w-full rounded-xl border border-border px-3 py-2 min-h-[80px] focus:outline-none focus:ring-2 focus:ring-primary"
       />
+      {error && <span className="text-danger text-xs mt-1 block">{error}</span>}
     </label>
   );
 }

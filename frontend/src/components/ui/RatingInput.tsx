@@ -1,6 +1,11 @@
-type Props = { label?: string; value: number; onChange: (n: number) => void };
+type Props = {
+  label?: string;
+  value: number;
+  onChange: (n: number) => void;
+  error?: string;
+};
 
-export function RatingInput({ label, value, onChange }: Props) {
+export function RatingInput({ label, value, onChange, error }: Props) {
   const id = label?.toLowerCase().replace(/\s+/g, "-");
   return (
     <label className="block" htmlFor={id}>
@@ -19,6 +24,7 @@ export function RatingInput({ label, value, onChange }: Props) {
         }}
         className="w-full rounded-xl border border-border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
       />
+      {error && <span className="text-danger text-xs mt-1 block">{error}</span>}
     </label>
   );
 }

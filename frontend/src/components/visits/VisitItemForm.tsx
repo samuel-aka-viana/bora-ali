@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { VisitItem, VisitItemType } from "../../types/visit-item";
 import { VISIT_ITEM_TYPES } from "../../utils/constants";
 import { Input } from "../ui/Input";
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export function VisitItemForm({ value, onChange, onRemove }: Props) {
+  const { t } = useTranslation();
   const existingPhoto = typeof value.photo === "string" ? value.photo : null;
   const [preview, setPreview] = useState<string | null>(existingPhoto);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -29,27 +31,27 @@ export function VisitItemForm({ value, onChange, onRemove }: Props) {
   return (
     <div className="border border-border rounded-xl bg-background p-3 space-y-3">
       <Input
-        label="Consumable name"
-        placeholder="Croissant, espresso, juice..."
+        label={t("visitItemForm.name")}
+        placeholder={t("visitItemForm.namePlaceholder")}
         value={value.name || ""}
         onChange={(e) => onChange({ ...value, name: e.target.value })}
       />
       <Select
-        label="Type"
+        label={t("visitItemForm.type")}
         value={value.type || "other"}
         onChange={(e) => onChange({ ...value, type: e.target.value as VisitItemType })}
       >
-        {VISIT_ITEM_TYPES.map((t) => (
-          <option key={t.value} value={t.value}>{t.label}</option>
+        {VISIT_ITEM_TYPES.map((item) => (
+          <option key={item.value} value={item.value}>{t(`itemType.${item.value}`)}</option>
         ))}
       </Select>
       <RatingInput
-        label="Rating (0-10)"
+        label={t("visitItemForm.rating")}
         value={Number(value.rating ?? 0)}
         onChange={(n) => onChange({ ...value, rating: n })}
       />
       <Input
-        label="Price (R$)"
+        label={t("visitItemForm.price")}
         type="number"
         min={0}
         step="0.01"
@@ -57,8 +59,8 @@ export function VisitItemForm({ value, onChange, onRemove }: Props) {
         onChange={(e) => onChange({ ...value, price: e.target.value })}
       />
       <Textarea
-        label="Comments"
-        placeholder="Texture, flavor, portion size..."
+        label={t("visitItemForm.notes")}
+        placeholder={t("visitItemForm.notesPlaceholder")}
         value={value.notes || ""}
         onChange={(e) => onChange({ ...value, notes: e.target.value })}
       />
@@ -68,21 +70,21 @@ export function VisitItemForm({ value, onChange, onRemove }: Props) {
           checked={!!value.would_order_again}
           onChange={(e) => onChange({ ...value, would_order_again: e.target.checked })}
         />
-        Would order again
+        {t("visitItemForm.wouldOrderAgain")}
       </label>
 
       <div className="space-y-1">
-        <span className="text-sm font-medium">Photo</span>
+        <span className="text-sm font-medium">{t("placeForm.coverPhoto")}</span>
         {preview && (
           <img
             src={preview}
-            alt="Item photo"
+            alt={t("visitItemForm.itemPhotoAlt")}
             className="w-full h-32 object-cover rounded-lg border border-border"
           />
         )}
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
         <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
-          {preview ? "Change photo" : "Upload photo"}
+          {preview ? t("placeForm.changePhoto") : t("placeForm.uploadPhoto")}
         </Button>
         {value.photo instanceof File && (
           <Button
@@ -91,13 +93,13 @@ export function VisitItemForm({ value, onChange, onRemove }: Props) {
             size="sm"
             onClick={() => { setPreview(existingPhoto); onChange({ ...value, photo: undefined }); }}
           >
-            Remove
+            {t("placeForm.removePhoto")}
           </Button>
         )}
       </div>
 
       <Button type="button" variant="danger" size="sm" onClick={onRemove}>
-        Remove
+        {t("common.delete")}
       </Button>
     </div>
   );
