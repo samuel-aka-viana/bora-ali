@@ -5,7 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from core.exceptions import InvalidTokenException
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import PasswordChangeSerializer, RegisterSerializer, UserSerializer
 from .throttles import AuthRateThrottle
 from .token_serializers import (
     SingleSessionTokenObtainPairSerializer,
@@ -43,8 +43,18 @@ class LogoutView(APIView):
         return Response(status=status.HTTP_205_RESET_CONTENT)
 
 
-class MeView(generics.RetrieveAPIView):
+class MeView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
 
     def get_object(self):
         return self.request.user
+
+
+class PasswordChangeView(generics.GenericAPIView):
+    serializer_class = PasswordChangeSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -26,3 +26,27 @@ class UserSession(models.Model):
     def rotate(self) -> None:
         self.session_key = uuid.uuid4()
         self.save(update_fields=["session_key"])
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile",
+        verbose_name=_("user"),
+    )
+    nickname = models.CharField(max_length=80, blank=True, verbose_name=_("nickname"))
+    profile_photo = models.FileField(
+        upload_to="profiles/",
+        blank=True,
+        null=True,
+        verbose_name=_("profile photo"),
+    )
+
+    class Meta:
+        db_table = "accounts_user_profile"
+        verbose_name = _("user profile")
+        verbose_name_plural = _("user profiles")
+
+    def __str__(self) -> str:
+        return self.user.username

@@ -10,8 +10,6 @@ import { Input } from "../components/ui/Input";
 import { EmptyState } from "../components/ui/EmptyState";
 import { LoadingState } from "../components/ui/LoadingState";
 import { ErrorMessage } from "../components/ui/ErrorMessage";
-import { LanguageToggle } from "../components/ui/LanguageToggle";
-import { useAuth } from "../contexts/useAuth";
 
 const STATUS_ICONS: Record<string, string> = {
   want_to_visit: "👁",
@@ -22,7 +20,6 @@ const STATUS_ICONS: Record<string, string> = {
 
 export default function PlacesPage() {
   const { t } = useTranslation();
-  const { logout } = useAuth();
   const [data, setData] = useState<Page<Place> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,10 +28,12 @@ export default function PlacesPage() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    setLoading(true);
     placesService
       .list({ page, search: search || undefined, status: (status as PlaceStatus) || undefined })
-      .then(setData)
+      .then((nextData) => {
+        setData(nextData);
+        setError("");
+      })
       .catch(() => setError(t("places.error")))
       .finally(() => setLoading(false));
   }, [search, status, page, t]);
@@ -50,15 +49,11 @@ export default function PlacesPage() {
           <p className="text-muted text-sm mt-1">{t("places.subtitle")}</p>
         </div>
         <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
-          <LanguageToggle />
           <Link to="/places/new" className="flex-1 sm:flex-none">
             <Button size="sm" className="w-full sm:w-auto">
               {t("places.new")}
             </Button>
           </Link>
-          <Button size="sm" variant="secondary" className="flex-1 sm:flex-none" onClick={logout}>
-            {t("places.logout")}
-          </Button>
         </div>
       </div>
 

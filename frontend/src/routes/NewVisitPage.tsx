@@ -4,7 +4,6 @@ import { visitsService } from "../services/visits.service";
 import { visitItemsService } from "../services/visit-items.service";
 import { VisitForm } from "../components/visits/VisitForm";
 import { BackButton } from "../components/ui/BackButton";
-import { LanguageToggle } from "../components/ui/LanguageToggle";
 
 export default function NewVisitPage() {
   const { id } = useParams();
@@ -13,10 +12,7 @@ export default function NewVisitPage() {
 
   return (
     <div className="max-w-xl mx-auto p-4">
-      <div className="flex items-center justify-between gap-3">
-        <BackButton fallbackTo={`/places/${id}`} />
-        <LanguageToggle />
-      </div>
+      <BackButton fallbackTo={`/places/${id}`} />
       <h1 className="text-2xl font-bold mb-4">{t("visitForm.newTitle")}</h1>
       <VisitForm
         onSubmit={async (visit, items) => {

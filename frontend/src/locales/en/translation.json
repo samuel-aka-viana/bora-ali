@@ -39,6 +39,36 @@
       "description": "Add your first place to get started."
     }
   },
+  "account": {
+    "title": "Account",
+    "subtitle": "Update your details, profile photo, and password.",
+    "photoAlt": "Profile photo",
+    "menu": {
+      "open": "Open account menu",
+      "account": "Account",
+      "language": "Language",
+      "logout": "Sign out"
+    },
+    "profile": {
+      "name": "Name",
+      "nickname": "Nickname",
+      "username": "Username",
+      "email": "Email",
+      "changePhoto": "Change photo",
+      "save": "Save profile",
+      "saved": "Profile updated.",
+      "error": "Could not update profile."
+    },
+    "password": {
+      "title": "Change password",
+      "current": "Current password",
+      "next": "New password",
+      "confirm": "Confirm new password",
+      "save": "Save password",
+      "saved": "Password updated.",
+      "error": "Could not change password."
+    }
+  },
   "placeDetail": {
     "edit": "Edit",
     "delete": "Delete",

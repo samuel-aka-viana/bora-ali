@@ -6,7 +6,6 @@ import type { Place } from "../types/place";
 import { PlaceForm } from "../components/places/PlaceForm";
 import { LoadingState } from "../components/ui/LoadingState";
 import { BackButton } from "../components/ui/BackButton";
-import { LanguageToggle } from "../components/ui/LanguageToggle";
 
 export default function EditPlacePage() {
   const { t } = useTranslation();
@@ -22,10 +21,7 @@ export default function EditPlacePage() {
 
   return (
     <div className="max-w-xl mx-auto p-4">
-      <div className="flex items-center justify-between gap-3">
-        <BackButton fallbackTo={`/places/${place.id}`} />
-        <LanguageToggle />
-      </div>
+      <BackButton fallbackTo={`/places/${place.id}`} />
       <h1 className="font-fraunces text-2xl font-bold mb-4 text-text">{t("editPlace.title")}</h1>
       <PlaceForm
         initial={place}

@@ -39,6 +39,36 @@
       "description": "Adicione seu primeiro lugar para começar."
     }
   },
+  "account": {
+    "title": "Conta",
+    "subtitle": "Atualize seus dados, foto de perfil e senha.",
+    "photoAlt": "Foto de perfil",
+    "menu": {
+      "open": "Abrir menu da conta",
+      "account": "Conta",
+      "language": "Idioma",
+      "logout": "Sair"
+    },
+    "profile": {
+      "name": "Nome",
+      "nickname": "Apelido",
+      "username": "Usuário",
+      "email": "E-mail",
+      "changePhoto": "Trocar foto",
+      "save": "Salvar perfil",
+      "saved": "Perfil atualizado.",
+      "error": "Não foi possível atualizar o perfil."
+    },
+    "password": {
+      "title": "Trocar senha",
+      "current": "Senha atual",
+      "next": "Nova senha",
+      "confirm": "Confirmar nova senha",
+      "save": "Salvar senha",
+      "saved": "Senha atualizada.",
+      "error": "Não foi possível trocar a senha."
+    }
+  },
   "placeDetail": {
     "edit": "Editar",
     "delete": "Excluir",

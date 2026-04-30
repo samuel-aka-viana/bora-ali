@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/useAuth";
@@ -17,14 +17,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [sessionMsg, setSessionMsg] = useState("");
-
-  useEffect(() => {
+  const [showSessionMessage] = useState(() => {
     if (localStorage.getItem(SESSION_INVALIDATED_KEY)) {
       localStorage.removeItem(SESSION_INVALIDATED_KEY);
-      setSessionMsg(t("auth.login.sessionExpired"));
+      return true;
     }
-  }, [t]);
+    return false;
+  });
 
   return (
     <div className="max-w-sm mx-auto p-6 mt-16 space-y-4">
@@ -51,9 +50,9 @@ export default function LoginPage() {
           {t("auth.login.title")}
         </h1>
         <p className="text-center text-sm text-muted -mt-2">{t("auth.login.subtitle")}</p>
-        {sessionMsg && (
+        {showSessionMessage && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {sessionMsg}
+            {t("auth.login.sessionExpired")}
           </div>
         )}
         <Input

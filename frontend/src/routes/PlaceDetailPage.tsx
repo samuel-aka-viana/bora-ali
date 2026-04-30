@@ -9,7 +9,6 @@ import { Badge } from "../components/ui/Badge";
 import { LoadingState } from "../components/ui/LoadingState";
 import { VisitCard } from "../components/visits/VisitCard";
 import { BackButton } from "../components/ui/BackButton";
-import { LanguageToggle } from "../components/ui/LanguageToggle";
 import { fmtPrice, fmtRating } from "../utils/formatters";
 
 export default function PlaceDetailPage() {
@@ -28,10 +27,7 @@ export default function PlaceDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <BackButton />
-        <LanguageToggle />
-      </div>
+      <BackButton />
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 min-w-0">

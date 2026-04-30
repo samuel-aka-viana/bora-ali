@@ -1,4 +1,4 @@
-const IMAGE_FIELDS = new Set(["photo", "cover_photo"]);
+const IMAGE_FIELDS = new Set(["photo", "cover_photo", "profile_photo"]);
 
 // Strip image fields that are strings (existing URLs) — only keep File objects.
 // Django ImageField rejects strings whether sent as JSON or FormData.

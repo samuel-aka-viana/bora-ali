@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { PublicRoute } from "./components/auth/PublicRoute";
+import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 import { ACCESS_KEY } from "./utils/constants";
 import LoginPage from "./routes/LoginPage";
 import RegisterPage from "./routes/RegisterPage";
@@ -11,6 +12,7 @@ import EditPlacePage from "./routes/EditPlacePage";
 import PlaceDetailPage from "./routes/PlaceDetailPage";
 import NewVisitPage from "./routes/NewVisitPage";
 import EditVisitPage from "./routes/EditVisitPage";
+import AccountPage from "./routes/AccountPage";
 
 export default function App() {
   return (
@@ -43,7 +45,19 @@ export default function App() {
             path="/places"
             element={
               <ProtectedRoute>
-                <PlacesPage />
+                <ProtectedLayout>
+                  <PlacesPage />
+                </ProtectedLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <ProtectedLayout>
+                  <AccountPage />
+                </ProtectedLayout>
               </ProtectedRoute>
             }
           />
@@ -51,7 +65,9 @@ export default function App() {
             path="/places/new"
             element={
               <ProtectedRoute>
-                <NewPlacePage />
+                <ProtectedLayout>
+                  <NewPlacePage />
+                </ProtectedLayout>
               </ProtectedRoute>
             }
           />
@@ -59,7 +75,9 @@ export default function App() {
             path="/places/:id"
             element={
               <ProtectedRoute>
-                <PlaceDetailPage />
+                <ProtectedLayout>
+                  <PlaceDetailPage />
+                </ProtectedLayout>
               </ProtectedRoute>
             }
           />
@@ -67,7 +85,9 @@ export default function App() {
             path="/places/:id/edit"
             element={
               <ProtectedRoute>
-                <EditPlacePage />
+                <ProtectedLayout>
+                  <EditPlacePage />
+                </ProtectedLayout>
               </ProtectedRoute>
             }
           />
@@ -75,7 +95,9 @@ export default function App() {
             path="/places/:id/visits/new"
             element={
               <ProtectedRoute>
-                <NewVisitPage />
+                <ProtectedLayout>
+                  <NewVisitPage />
+                </ProtectedLayout>
               </ProtectedRoute>
             }
           />
@@ -83,7 +105,9 @@ export default function App() {
             path="/visits/:id/edit"
             element={
               <ProtectedRoute>
-                <EditVisitPage />
+                <ProtectedLayout>
+                  <EditVisitPage />
+                </ProtectedLayout>
               </ProtectedRoute>
             }
           />

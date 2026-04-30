@@ -32,8 +32,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    const nextUser = await authService.me();
+    setUser(nextUser);
+    return nextUser;
+  };
+
   return (
-    <AuthCtx.Provider value={{ user, loading, login, logout }}>
+    <AuthCtx.Provider value={{ user, loading, login, logout, refreshUser, setUser }}>
       {children}
     </AuthCtx.Provider>
   );
