@@ -16,9 +16,9 @@ export default function NewVisitPage() {
       <h1 className="text-2xl font-bold mb-4">{t("visitForm.newTitle")}</h1>
       <VisitForm
         onSubmit={async (visit, items) => {
-          const created = await visitsService.create(Number(id), visit);
+          const created = await visitsService.create(id!, visit);
           for (const it of items) {
-            await visitItemsService.create(created.id, it);
+            await visitItemsService.create(created.public_id, it);
           }
           nav(`/places/${id}`);
         }}

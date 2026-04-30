@@ -40,7 +40,7 @@ export function VisitCard({ visit, onEdit, onDelete }: Props) {
       {visit.items.length > 0 && (
         <div className="mt-3 border-t border-border pt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
           {visit.items.map((it) => (
-            <div key={it.id} className="bg-surface rounded-xl border border-border overflow-hidden text-sm">
+            <div key={it.public_id} className="bg-surface rounded-xl border border-border overflow-hidden text-sm">
               {it.photo ? (
                 <img src={it.photo} alt={it.name} className="w-full h-24 object-cover" />
               ) : (

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Visit } from "../../types/visit";
-import type { VisitItem, VisitItemType } from "../../types/visit-item";
+import type { VisitItem } from "../../types/visit-item";
 import { DateTimePicker } from "../ui/DateTimePicker";
 import { Textarea } from "../ui/Textarea";
 import { RatingInput } from "../ui/RatingInput";

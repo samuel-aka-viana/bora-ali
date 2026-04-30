@@ -1,12 +1,14 @@
 export type PlaceStatus = "want_to_visit" | "visited" | "favorite" | "would_not_return";
 
 export interface Place {
-  id: number;
+  public_id: string;
   name: string;
   category: string;
   address: string;
   instagram_url?: string;
   maps_url?: string;
+  latitude?: string | null;
+  longitude?: string | null;
   status: PlaceStatus;
   notes?: string;
   cover_photo?: string;

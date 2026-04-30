@@ -4,7 +4,7 @@ import { Badge } from "../ui/Badge";
 
 export function PlaceCard({ place, index = 0 }: { place: Place; index?: number }) {
   return (
-    <Link to={`/places/${place.id}`}>
+    <Link to={`/places/${place.public_id}`}>
       <div
         className="bg-surface rounded-2xl border border-border shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer overflow-hidden group animate-fade-slide-up"
         style={{ animationDelay: `${index * 55}ms` }}

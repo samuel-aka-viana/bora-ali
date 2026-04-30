@@ -9,6 +9,7 @@ import { Badge } from "../components/ui/Badge";
 import { LoadingState } from "../components/ui/LoadingState";
 import { VisitCard } from "../components/visits/VisitCard";
 import { BackButton } from "../components/ui/BackButton";
+import { MapModal } from "../components/ui/MapModal";
 import { fmtPrice, fmtRating } from "../utils/formatters";
 
 export default function PlaceDetailPage() {
@@ -16,9 +17,10 @@ export default function PlaceDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const [place, setPlace] = useState<PlaceWithVisits | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
 
   useEffect(() => {
-    placesService.get(Number(id)).then(setPlace);
+    placesService.get(id!).then(setPlace);
   }, [id]);
 
   if (!place) return <LoadingState />;
@@ -38,7 +40,7 @@ export default function PlaceDetailPage() {
             </div>
           </div>
           <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0">
-            <Link to={`/places/${place.id}/edit`} className="flex-1 sm:flex-none">
+            <Link to={`/places/${place.public_id}/edit`} className="flex-1 sm:flex-none">
               <Button variant="secondary" size="sm" className="w-full sm:w-auto">
                 {t("placeDetail.edit")}
               </Button>
@@ -48,7 +50,7 @@ export default function PlaceDetailPage() {
               size="sm"
               className="flex-1 sm:flex-none"
               onClick={async () => {
-                await placesService.remove(place.id);
+                await placesService.remove(place.public_id);
                 nav("/places");
               }}
             >
@@ -62,7 +64,20 @@ export default function PlaceDetailPage() {
             {t("placeDetail.instagram")}
           </a>
         )}
-        {place.maps_url && (
+        {place.latitude && place.longitude && (
+          <button
+            type="button"
+            onClick={() => setMapOpen(true)}
+            className="flex items-center gap-1 text-primary text-sm mt-1 transition hover:underline"
+          >
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-current stroke-2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
+            {t("placeDetail.maps")}
+          </button>
+        )}
+        {place.maps_url && !place.latitude && (
           <a href={place.maps_url} className="text-primary text-sm block mt-1" target="_blank" rel="noreferrer">
             {t("placeDetail.maps")}
           </a>
@@ -104,7 +119,7 @@ export default function PlaceDetailPage() {
         <h2 className="text-xl font-semibold">
           {t("placeDetail.visits.title", { count: place.visits.length })}
         </h2>
-        <Link to={`/places/${place.id}/visits/new`} className="w-full sm:w-auto">
+        <Link to={`/places/${place.public_id}/visits/new`} className="w-full sm:w-auto">
           <Button size="sm" className="w-full sm:w-auto">{t("placeDetail.visits.add")}</Button>
         </Link>
       </div>
@@ -114,15 +129,26 @@ export default function PlaceDetailPage() {
       ) : (
         place.visits.map((v) => (
           <VisitCard
-            key={v.id}
+            key={v.public_id}
             visit={v}
-            onEdit={() => nav(`/visits/${v.id}/edit`, { state: { visit: v } })}
+            onEdit={() => nav(`/visits/${v.public_id}/edit`, { state: { visit: v } })}
             onDelete={async () => {
-              await visitsService.remove(v.id);
-              setPlace({ ...place, visits: place.visits.filter((x) => x.id !== v.id) });
+              await visitsService.remove(v.public_id);
+              setPlace({ ...place, visits: place.visits.filter((x) => x.public_id !== v.public_id) });
             }}
           />
         ))
+      )}
+
+      {place.latitude && place.longitude && (
+        <MapModal
+          open={mapOpen}
+          onClose={() => setMapOpen(false)}
+          name={place.name}
+          latitude={place.latitude}
+          longitude={place.longitude}
+          mapsUrl={place.maps_url}
+        />
       )}
     </div>
   );

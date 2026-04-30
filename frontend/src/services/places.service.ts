@@ -27,13 +27,14 @@ export const placesService = {
   list: (params: { page?: number; status?: PlaceStatus; search?: string } = {}) =>
     api.get<Page<Place>>("/places/", { params }).then((r) => r.data),
 
-  get: (id: number) => api.get<PlaceWithVisits>(`/places/${id}/`).then((r) => r.data),
+  get: (publicId: string) =>
+    api.get<PlaceWithVisits>(`/places/${publicId}/`).then((r) => r.data),
 
   create: (data: PlacePayload) =>
     api.post<Place>("/places/", toPayload(data)).then((r) => r.data),
 
-  update: (id: number, data: PlacePayload) =>
-    api.patch<Place>(`/places/${id}/`, toPayload(data)).then((r) => r.data),
+  update: (publicId: string, data: PlacePayload) =>
+    api.patch<Place>(`/places/${publicId}/`, toPayload(data)).then((r) => r.data),
 
-  remove: (id: number) => api.delete(`/places/${id}/`),
+  remove: (publicId: string) => api.delete(`/places/${publicId}/`),
 };

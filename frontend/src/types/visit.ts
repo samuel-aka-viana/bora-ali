@@ -1,7 +1,7 @@
 import type { VisitItem } from "./visit-item";
 
 export interface Visit {
-  id: number;
+  public_id: string;
   place: number;
   visited_at: string;
   environment_rating: number;

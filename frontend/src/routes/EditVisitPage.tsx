@@ -25,12 +25,12 @@ export default function EditVisitPage() {
         initial={visit}
         initialItems={visit?.items ?? []}
         onSubmit={async (visitData, items) => {
-          await visitsService.update(Number(id), visitData);
+          await visitsService.update(id!, visitData);
           for (const it of items as ItemPayload[]) {
-            if (it.id) {
-              await visitItemsService.update(it.id, it);
+            if (it.public_id) {
+              await visitItemsService.update(it.public_id, it);
             } else {
-              await visitItemsService.create(Number(id), it);
+              await visitItemsService.create(id!, it);
             }
           }
           nav(-1);

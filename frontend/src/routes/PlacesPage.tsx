@@ -106,7 +106,7 @@ export default function PlacesPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {!loading && !error && data?.results.map((p, i) => (
-          <PlaceCard key={p.id} place={p} index={i} />
+          <PlaceCard key={p.public_id} place={p} index={i} />
         ))}
       </div>
 

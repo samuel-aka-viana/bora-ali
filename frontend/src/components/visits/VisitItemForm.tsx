@@ -5,7 +5,6 @@ import { VISIT_ITEM_TYPES } from "../../utils/constants";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { RatingInput } from "../ui/RatingInput";
-import { Button } from "../ui/Button";
 import { Textarea } from "../ui/Textarea";
 
 type VisitItemPayload = Partial<Omit<VisitItem, "photo">> & { photo?: string | File };
@@ -16,7 +15,7 @@ type Props = {
   onRemove: () => void;
 };
 
-export function VisitItemForm({ value, onChange, onRemove }: Props) {
+export function VisitItemForm({ value, onChange }: Props) {
   const { t } = useTranslation();
   const existingPhoto = typeof value.photo === "string" ? value.photo : null;
   const [preview, setPreview] = useState<string | null>(existingPhoto);

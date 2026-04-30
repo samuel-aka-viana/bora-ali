@@ -1,7 +1,7 @@
 export type VisitItemType = "sweet" | "savory" | "drink" | "coffee" | "juice" | "dessert" | "other";
 
 export interface VisitItem {
-  id: number;
+  public_id: string;
   visit: number;
   name: string;
   type: VisitItemType;

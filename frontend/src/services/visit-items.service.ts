@@ -10,11 +10,11 @@ function toPayload(data: VisitItemPayload) {
 }
 
 export const visitItemsService = {
-  create: (visitId: number, data: VisitItemPayload) =>
-    api.post<VisitItem>(`/visits/${visitId}/items/`, toPayload(data)).then((r) => r.data),
+  create: (visitPublicId: string, data: VisitItemPayload) =>
+    api.post<VisitItem>(`/visits/${visitPublicId}/items/`, toPayload(data)).then((r) => r.data),
 
-  update: (id: number, data: VisitItemPayload) =>
-    api.patch<VisitItem>(`/visit-items/${id}/`, toPayload(data)).then((r) => r.data),
+  update: (publicId: string, data: VisitItemPayload) =>
+    api.patch<VisitItem>(`/visit-items/${publicId}/`, toPayload(data)).then((r) => r.data),
 
-  remove: (id: number) => api.delete(`/visit-items/${id}/`),
+  remove: (publicId: string) => api.delete(`/visit-items/${publicId}/`),
 };
