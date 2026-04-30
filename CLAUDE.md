@@ -11,14 +11,16 @@ The full MVP specification lives in `skills.md`.
 ## Architecture
 
 ```
-Browser → React SPA (frontend/) → Django REST API (backend/) → PostgreSQL
-                                                              ↓
-                                                   Jaeger (OTLP traces)
+Browser → nginx (frontend/) → Django REST API (backend/) → PostgreSQL
+               ↓ /api/ proxy                              ↓
+           React SPA                            VersityGW (S3 storage)
+                                                          ↓
+                                                 Jaeger (OTLP traces)
 ```
 
 - **backend/**: Django + Django REST Framework + SimpleJWT + PostgreSQL
-- **frontend/**: React + Vite + TypeScript + Tailwind CSS
-- **docker-compose.yml**: PostgreSQL + Jaeger (observability UI at `http://localhost:16686`)
+- **frontend/**: React + Vite + TypeScript + Tailwind CSS — servido por nginx que também faz proxy de `/api/` para o backend
+- **docker-compose.yml** (raiz): stack completa — frontend, backend, PostgreSQL, VersityGW, Jaeger
 
 ## Backend Commands
 
@@ -56,12 +58,38 @@ npm run test      # vitest
 npm run lint      # eslint
 ```
 
-## Database & Observability
-
-PostgreSQL + Jaeger via Docker Compose:
+## Docker Deploy (stack completa)
 
 ```bash
-docker compose up -d   # starts postgres + jaeger
+# na raiz do projeto
+docker compose up -d --build
+```
+
+Serviços sobem em:
+- `http://localhost` — frontend (nginx)
+- `http://localhost/api/` — API (proxiado pelo nginx)
+- `http://localhost:8081` — VersityGW S3 API (acesso direto para URLs de media)
+- `http://localhost:8082` — VersityGW WebGUI
+- `http://localhost:16686` — Jaeger UI
+
+Variáveis de ambiente relevantes (arquivo `.env` na raiz, baseado em `backend/.env.example`):
+
+```
+POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
+DJANGO_SECRET_KEY, DJANGO_DEBUG, DJANGO_ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS
+VERSITYGW_ACCESS_KEY, VERSITYGW_SECRET_KEY
+AWS_STORAGE_BUCKET_NAME   # default: bora-ali
+```
+
+> **Nota sobre media URLs**: o backend acessa o VersityGW internamente via `http://storage:7070`. As URLs de media geradas apontam para esse endereço interno. Em produção configure um proxy reverso ou use `AWS_S3_ENDPOINT_URL` com o hostname público.
+
+## Database & Observability (desenvolvimento local)
+
+PostgreSQL + Jaeger via Docker Compose do backend (para rodar sem as imagens do app):
+
+```bash
+cd backend
+docker compose up -d   # starts postgres + jaeger + versitygw
 ```
 
 Credentials from `.env` (see `.env.example` in backend/).
