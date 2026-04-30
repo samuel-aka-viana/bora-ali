@@ -24,6 +24,11 @@ type Props = {
   label: string;
   hint: string;
   clearLabel: string;
+  useCurrentLocationLabel: string;
+  locatingLabel: string;
+  geolocationUnavailableMessage: string;
+  geolocationDeniedMessage: string;
+  geolocationErrorMessage: string;
   zoomInLabel: string;
   zoomOutLabel: string;
   latitude?: string | null;
@@ -66,6 +71,11 @@ export function LocationPicker({
   label,
   hint,
   clearLabel,
+  useCurrentLocationLabel,
+  locatingLabel,
+  geolocationUnavailableMessage,
+  geolocationDeniedMessage,
+  geolocationErrorMessage,
   zoomInLabel,
   zoomOutLabel,
   latitude,
@@ -91,6 +101,13 @@ export function LocationPicker({
   }, [latitude, longitude]);
   const [center, setCenter] = useState<LatLng>(selected ?? DEFAULT_CENTER);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
+  const [locating, setLocating] = useState(false);
+  const [geolocationError, setGeolocationError] = useState("");
+
+  useEffect(() => {
+    if (!selected) return;
+    setCenter(selected);
+  }, [selected]);
 
   useEffect(() => {
     const element = mapRef.current;
@@ -168,19 +185,62 @@ export function LocationPicker({
     });
   }
 
+  function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setGeolocationError(geolocationUnavailableMessage);
+      return;
+    }
+
+    setLocating(true);
+    setGeolocationError("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+        setCenter(coords);
+        onChange({
+          latitude: formatCoord(coords.latitude),
+          longitude: formatCoord(coords.longitude),
+        });
+        setLocating(false);
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setGeolocationError(geolocationDeniedMessage);
+        } else {
+          setGeolocationError(geolocationErrorMessage);
+        }
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  }
+
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-medium text-text">{label}</span>
-        {selected && (
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => onChange({ latitude: null, longitude: null })}
-            className="text-xs text-muted transition hover:text-red-500"
+            onClick={useCurrentLocation}
+            disabled={locating}
+            className="text-xs text-primary transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {clearLabel}
+            {locating ? locatingLabel : useCurrentLocationLabel}
           </button>
-        )}
+          {selected && (
+            <button
+              type="button"
+              onClick={() => onChange({ latitude: null, longitude: null })}
+              className="text-xs text-muted transition hover:text-red-500"
+            >
+              {clearLabel}
+            </button>
+          )}
+        </div>
       </div>
       <div
         ref={mapRef}
@@ -264,6 +324,7 @@ export function LocationPicker({
         </div>
       </div>
       <p className="text-xs text-muted">{hint}</p>
+      {geolocationError && <p className="text-xs text-red-500">{geolocationError}</p>}
       {selected && (
         <p className="text-xs text-muted">
           {formatCoord(selected.latitude)}, {formatCoord(selected.longitude)}

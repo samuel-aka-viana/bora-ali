@@ -3,6 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
 from core import messages
+from core.storage_urls import build_public_media_url
 from .models import UserProfile
 
 User = get_user_model()
@@ -69,9 +70,7 @@ class UserSerializer(serializers.ModelSerializer):
         profile = self._get_profile(obj)
         if not profile.profile_photo:
             return ""
-        request = self.context.get("request")
-        url = profile.profile_photo.url
-        return request.build_absolute_uri(url) if request else url
+        return build_public_media_url(profile.profile_photo, self.context.get("request"))
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

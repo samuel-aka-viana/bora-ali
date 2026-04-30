@@ -19,6 +19,13 @@ def test_login_returns_tokens(api_client, user):
     assert "refresh" in r.data
 
 
+def test_login_with_email_returns_tokens(api_client, user):
+    r = api_client.post("/api/auth/login/", {"username": "a@a.com", "password": "pw12345!"}, format="json")
+    assert r.status_code == 200
+    assert "access" in r.data
+    assert "refresh" in r.data
+
+
 def test_refresh(api_client, user):
     tokens = api_client.post("/api/auth/login/", {"username": "alice", "password": "pw12345!"}, format="json").data
     r = api_client.post("/api/auth/refresh/", {"refresh": tokens["refresh"]}, format="json")

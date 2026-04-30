@@ -3,6 +3,7 @@ import re
 from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
 
+from core.storage_urls import build_public_media_url
 from .models import Place, Visit, VisitItem
 
 
@@ -21,6 +22,11 @@ def _extract_coords(url: str) -> tuple[float, float] | tuple[None, None]:
 
 
 class VisitItemSerializer(FlexFieldsModelSerializer):
+    photo = serializers.SerializerMethodField()
+
+    def get_photo(self, obj):
+        return build_public_media_url(obj.photo, self.context.get("request"))
+
     class Meta:
         model = VisitItem
         fields = (
@@ -54,7 +60,11 @@ class VisitItemWriteSerializer(FlexFieldsModelSerializer):
 
 
 class VisitSerializer(FlexFieldsModelSerializer):
+    photo = serializers.SerializerMethodField()
     items = VisitItemSerializer(many=True, read_only=True)
+
+    def get_photo(self, obj):
+        return build_public_media_url(obj.photo, self.context.get("request"))
 
     class Meta:
         model = Visit
@@ -83,6 +93,11 @@ class VisitSerializer(FlexFieldsModelSerializer):
 
 
 class VisitExpandSerializer(FlexFieldsModelSerializer):
+    photo = serializers.SerializerMethodField()
+
+    def get_photo(self, obj):
+        return build_public_media_url(obj.photo, self.context.get("request"))
+
     class Meta:
         model = Visit
         fields = (
@@ -123,6 +138,11 @@ class VisitWriteSerializer(FlexFieldsModelSerializer):
 
 
 class PlaceListSerializer(FlexFieldsModelSerializer):
+    cover_photo = serializers.SerializerMethodField()
+
+    def get_cover_photo(self, obj):
+        return build_public_media_url(obj.cover_photo, self.context.get("request"))
+
     class Meta:
         model = Place
         fields = (
@@ -145,6 +165,7 @@ class PlaceListSerializer(FlexFieldsModelSerializer):
 
 
 class PlaceDetailSerializer(FlexFieldsModelSerializer):
+    cover_photo = serializers.SerializerMethodField()
     visits = VisitSerializer(many=True, read_only=True)
     consumables_count = serializers.IntegerField(read_only=True)
     average_consumable_rating = serializers.DecimalField(
@@ -159,6 +180,9 @@ class PlaceDetailSerializer(FlexFieldsModelSerializer):
         read_only=True,
         allow_null=True,
     )
+
+    def get_cover_photo(self, obj):
+        return build_public_media_url(obj.cover_photo, self.context.get("request"))
 
     class Meta:
         model = Place

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { ACCESS_KEY, REFRESH_KEY, SESSION_INVALIDATED_KEY } from "../utils/constants";
+import { clearClientState } from "../utils/client-state";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
@@ -23,7 +24,7 @@ api.interceptors.response.use(
       const refresh = localStorage.getItem(REFRESH_KEY);
 
       if (!refresh) {
-        localStorage.clear();
+        await clearClientState();
         window.location.href = "/login";
         return Promise.reject(error);
       }
@@ -44,7 +45,7 @@ api.interceptors.response.use(
       } catch (e) {
         refreshing = null;
         const isSessionExpired = isSessionInvalidated(e);
-        localStorage.clear();
+        await clearClientState();
         if (isSessionExpired) localStorage.setItem(SESSION_INVALIDATED_KEY, "1");
         window.location.href = "/login";
         return Promise.reject(e);

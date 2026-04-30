@@ -6,10 +6,19 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
+AWS_S3_PUBLIC_URL = os.getenv("AWS_S3_PUBLIC_URL", "")
+AWS_S3_PUBLIC_ENDPOINT = os.getenv("AWS_S3_PUBLIC_ENDPOINT", "")
+AWS_S3_URL_EXPIRES_IN = int(os.getenv("AWS_S3_URL_EXPIRES_IN", "3600"))
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "bora-ali")
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")
+AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL", "http://localhost:8081")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret")
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
+USE_VERSITYGW = os.getenv("USE_VERSITYGW", "False") == "True"
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -97,7 +106,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # VersityGW Object Storage Configuration
-if os.getenv("USE_VERSITYGW", "False") == "True":
+if USE_VERSITYGW:
     # Use VersityGW (S3-compatible) for file storage
     STORAGES = {
         "default": {
@@ -118,7 +127,11 @@ if os.getenv("USE_VERSITYGW", "False") == "True":
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-    MEDIA_URL = f"{os.getenv('AWS_S3_ENDPOINT_URL', 'http://localhost:8080')}/{os.getenv('AWS_STORAGE_BUCKET_NAME', 'bora-ali')}/"
+    public_media_base = os.getenv("AWS_S3_PUBLIC_URL", "").rstrip("/")
+    if public_media_base:
+        MEDIA_URL = f"{public_media_base}/"
+    else:
+        MEDIA_URL = f"{os.getenv('AWS_S3_ENDPOINT_URL', 'http://localhost:8080')}/{os.getenv('AWS_STORAGE_BUCKET_NAME', 'bora-ali')}/"
 else:
     # Use local filesystem for development
     STORAGES = {
@@ -175,6 +188,10 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(
     ","
 )
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    "CSRF_TRUSTED_ORIGINS",
+    "http://localhost:5173,http://localhost:8080",
+).split(",")
 
 LOGGING = {
     "version": 1,

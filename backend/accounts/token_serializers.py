@@ -33,6 +33,12 @@ class SingleSessionTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
+        login_value = attrs.get("username", "")
+        if login_value and "@" in login_value:
+            user = User.objects.filter(email__iexact=login_value).only("username").first()
+            if user:
+                attrs["username"] = user.username
+
         try:
             return super().validate(attrs)
         except AuthenticationFailed as error:

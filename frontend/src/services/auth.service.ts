@@ -2,6 +2,7 @@ import { api } from "./api";
 import { ACCESS_KEY, REFRESH_KEY } from "../utils/constants";
 import type { User } from "../types/user";
 import { hasFile, toFormData } from "./form-data";
+import { clearClientState } from "../utils/client-state";
 
 export type AccountUpdatePayload = {
   username: string;
@@ -33,8 +34,7 @@ export const authService = {
     } catch {
       // Local logout should still complete if the server rejects the refresh token.
     }
-    localStorage.removeItem(ACCESS_KEY);
-    localStorage.removeItem(REFRESH_KEY);
+    await clearClientState();
   },
   async me(): Promise<User> {
     const { data } = await api.get<User>("/auth/me/");
