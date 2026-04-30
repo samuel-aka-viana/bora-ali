@@ -27,9 +27,6 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-sm mx-auto p-6 mt-16 space-y-4">
-      <div className="flex justify-end">
-        <LanguageToggle />
-      </div>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -78,6 +75,9 @@ export default function LoginPage() {
             {t("auth.login.register")}
           </Link>
         </p>
+        <div className="flex justify-center pt-1">
+          <LanguageToggle />
+        </div>
       </form>
     </div>
   );

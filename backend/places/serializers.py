@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from rest_flex_fields import FlexFieldsModelSerializer
+from rest_framework import serializers
 
 from .models import Place, Visit, VisitItem
 
@@ -134,9 +134,19 @@ class PlaceListSerializer(FlexFieldsModelSerializer):
 
 class PlaceDetailSerializer(FlexFieldsModelSerializer):
     visits = VisitSerializer(many=True, read_only=True)
-    consumables_count = serializers.SerializerMethodField()
-    average_consumable_rating = serializers.SerializerMethodField()
-    total_consumed_amount = serializers.SerializerMethodField()
+    consumables_count = serializers.IntegerField(read_only=True)
+    average_consumable_rating = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+        allow_null=True,
+    )
+    total_consumed_amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+        allow_null=True,
+    )
 
     class Meta:
         model = Place
@@ -163,32 +173,6 @@ class PlaceDetailSerializer(FlexFieldsModelSerializer):
                 {"many": True, "read_only": True},
             ),
         }
-
-    def _visit_items(self, obj):
-        cached_items = getattr(obj, "_cached_visit_items", None)
-        if cached_items is None:
-            cached_items = [item for visit in obj.visits.all() for item in visit.items.all()]
-            obj._cached_visit_items = cached_items
-        return cached_items
-
-    def get_consumables_count(self, obj):
-        return len(self._visit_items(obj))
-
-    def get_average_consumable_rating(self, obj):
-        ratings = [
-            item.rating for item in self._visit_items(obj) if item.rating is not None
-        ]
-        if not ratings:
-            return None
-        return float(round(sum(ratings) / len(ratings), 2))
-
-    def get_total_consumed_amount(self, obj):
-        prices = [
-            item.price for item in self._visit_items(obj) if item.price is not None
-        ]
-        if not prices:
-            return None
-        return f"{sum(prices):.2f}"
 
 
 class PlaceWriteSerializer(FlexFieldsModelSerializer):

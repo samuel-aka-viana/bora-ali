@@ -5,7 +5,6 @@ import { authService } from "../services/auth.service";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { ErrorMessage } from "../components/ui/ErrorMessage";
-import { LanguageToggle } from "../components/ui/LanguageToggle";
 import { getApiErrorState } from "../services/api-errors";
 
 export default function RegisterPage() {
@@ -19,9 +18,6 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-sm mx-auto p-6 mt-16 space-y-4">
-      <div className="flex justify-end">
-        <LanguageToggle />
-      </div>
       <form
         onSubmit={async (e) => {
           e.preventDefault();

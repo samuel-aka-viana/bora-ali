@@ -151,7 +151,9 @@
     "notes": "Comentários",
     "notesPlaceholder": "Textura, sabor, tamanho...",
     "wouldOrderAgain": "Pediria novamente",
-    "itemPhotoAlt": "Foto do item"
+    "itemPhotoAlt": "Foto do item",
+    "addTitle": "Adicionar item",
+    "editTitle": "Editar item"
   },
   "visitCard": {
     "wouldReturn": "Voltaria",

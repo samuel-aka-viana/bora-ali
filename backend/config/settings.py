@@ -105,7 +105,9 @@ if os.getenv("USE_VERSITYGW", "False") == "True":
             "OPTIONS": {
                 "bucket_name": os.getenv("AWS_STORAGE_BUCKET_NAME", "bora-ali"),
                 "region_name": os.getenv("AWS_S3_REGION_NAME", "us-east-1"),
-                "endpoint_url": os.getenv("AWS_S3_ENDPOINT_URL", "http://localhost:8081"),
+                "endpoint_url": os.getenv(
+                    "AWS_S3_ENDPOINT_URL", "http://localhost:8081"
+                ),
                 "use_ssl": os.getenv("AWS_S3_USE_SSL", "False") == "True",
                 "addressing_style": "path",
                 "signature_version": "s3v4",
@@ -173,3 +175,20 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(
     ","
 )
+
+LOGGING = {
+    "version": 1,
+    "disable_patterns": "django.template.loader.TemplateDoesNotExist",
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}

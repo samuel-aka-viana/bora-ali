@@ -71,28 +71,42 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
       </Select>
       <Textarea label={t("placeForm.notes")} value={f.notes || ""} onChange={upd("notes")} error={fieldErrors.notes} />
 
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <span className="text-sm font-medium">{t("placeForm.coverPhoto")}</span>
-        {preview && (
-          <img
-            src={preview}
-            alt={t("placeForm.coverPreviewAlt")}
-            className="w-full h-40 object-cover rounded-lg border border-border"
-          />
-        )}
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-        <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
-          {preview ? t("placeForm.changePhoto") : t("placeForm.uploadPhoto")}
-        </Button>
-        {coverFile && (
-          <Button
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className="group relative flex h-36 w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border transition hover:border-primary/40"
+        >
+          {preview ? (
+            <>
+              <img
+                src={preview}
+                alt={t("placeForm.coverPreviewAlt")}
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100">
+                <span className="text-xs font-medium text-white">{t("placeForm.changePhoto")}</span>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-1 text-muted transition group-hover:text-primary/70">
+              <svg viewBox="0 0 24 24" className="h-6 w-6 fill-none stroke-current stroke-1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5V18a1.5 1.5 0 001.5 1.5h15A1.5 1.5 0 0021 18v-1.5M16.5 8.25L12 3.75m0 0L7.5 8.25M12 3.75V15" />
+              </svg>
+              <span className="text-xs">{t("placeForm.uploadPhoto")}</span>
+            </div>
+          )}
+        </button>
+        {preview && (
+          <button
             type="button"
-            variant="danger"
-            size="sm"
             onClick={() => { setCoverFile(null); setPreview(initial.cover_photo ?? null); }}
+            className="text-xs text-muted transition hover:text-red-500"
           >
             {t("placeForm.removePhoto")}
-          </Button>
+          </button>
         )}
       </div>
 

@@ -1,8 +1,8 @@
+from core.viewsets import ViewSetBase, WriteViewSetBase
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from core.viewsets import ViewSetBase, WriteViewSetBase
 from .filters import PlaceFilter, VisitFilter, VisitItemFilter
 from .models import Place, Visit, VisitItem
 from .params_serializers import PlaceVisitParamsSerializer, VisitItemParamsSerializer
@@ -36,10 +36,13 @@ class PlaceViewSet(ViewSetBase):
     def get_queryset(self):
         expand_param = self.request.query_params.get("expand")
         queryset = Place.objects.for_user(self.request.user)
+
         if self.action == "list":
             return queryset.with_list_expansion(expand_param)
+
         if self.action == "retrieve":
-            return queryset.with_detail_payload()
+            return queryset.with_consumable_stats().with_detail_payload()
+
         return queryset
 
     @action(detail=True, methods=["post"], url_path="visits")

@@ -17,6 +17,7 @@ export function RatingInput({ label, value, onChange, error }: Props) {
         max={10}
         step={0.1}
         value={value}
+        onFocus={(e) => e.target.select()}
         onChange={(e) => {
           const n = Number(e.target.value);
           if (Number.isNaN(n) || n < 0 || n > 10) return;

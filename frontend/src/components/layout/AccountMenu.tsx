@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/useAuth";
 import { LanguageToggle } from "../ui/LanguageToggle";
@@ -16,6 +16,7 @@ function initials(name: string) {
 export function AccountMenu() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const displayName = user?.display_name || user?.nickname || user?.username || t("account.menu.account");
@@ -28,6 +29,8 @@ export function AccountMenu() {
     window.addEventListener("mousedown", onClick);
     return () => window.removeEventListener("mousedown", onClick);
   }, [open]);
+
+  if (pathname === "/account") return null;
 
   return (
     <div ref={menuRef} className="fixed right-4 top-4 z-40">
@@ -72,13 +75,15 @@ export function AccountMenu() {
           </div>
 
           <div className="space-y-2 py-3">
-            <Link
-              to="/account"
-              onClick={() => setOpen(false)}
-              className="block rounded-xl px-3 py-2 text-sm font-medium text-text transition hover:bg-background"
-            >
-              {t("account.menu.account")}
-            </Link>
+            {pathname !== "/account" && (
+              <Link
+                to="/account"
+                onClick={() => setOpen(false)}
+                className="block rounded-xl px-3 py-2 text-sm font-medium text-text transition hover:bg-background"
+              >
+                {t("account.menu.account")}
+              </Link>
+            )}
             <div className="flex items-center justify-between gap-3 px-3">
               <span className="text-sm text-muted">{t("account.menu.language")}</span>
               <LanguageToggle />
