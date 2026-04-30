@@ -12,11 +12,13 @@ The full MVP specification lives in `skills.md`.
 
 ```
 Browser → React SPA (frontend/) → Django REST API (backend/) → PostgreSQL
+                                                              ↓
+                                                   Jaeger (OTLP traces)
 ```
 
 - **backend/**: Django + Django REST Framework + SimpleJWT + PostgreSQL
 - **frontend/**: React + Vite + TypeScript + Tailwind CSS
-- **docker-compose.yml**: PostgreSQL only (app servers run locally)
+- **docker-compose.yml**: PostgreSQL + Jaeger (observability UI at `http://localhost:16686`)
 
 ## Backend Commands
 
@@ -54,15 +56,29 @@ npm run test      # vitest
 npm run lint      # eslint
 ```
 
-## Database
+## Database & Observability
 
-PostgreSQL via Docker Compose (no SQLite):
+PostgreSQL + Jaeger via Docker Compose:
 
 ```bash
-docker compose up -d   # start postgres
+docker compose up -d   # starts postgres + jaeger
 ```
 
 Credentials from `.env` (see `.env.example` in backend/).
+
+## OpenTelemetry
+
+Tracing is opt-in via env vars. Add to `backend/.env` to enable:
+
+```
+OTEL_SERVICE_NAME=bora-ali
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces
+```
+
+- Traces are sent to Jaeger (`docker compose up -d`) via OTLP HTTP on port 4318
+- Jaeger UI: `http://localhost:16686`
+- Instruments: Django requests, SQL queries (psycopg), and log correlation
+- Implementation: `backend/config/telemetry.py` — activated in `manage.py` and `wsgi.py` when `OTEL_EXPORTER_OTLP_ENDPOINT` is set
 
 ## Key Design Decisions
 

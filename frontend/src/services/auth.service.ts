@@ -21,7 +21,9 @@ export const authService = {
     const refresh = localStorage.getItem(REFRESH_KEY);
     try {
       await api.post("/auth/logout/", { refresh });
-    } catch {}
+    } catch {
+      // Local logout should still complete if the server rejects the refresh token.
+    }
     localStorage.removeItem(ACCESS_KEY);
     localStorage.removeItem(REFRESH_KEY);
   },

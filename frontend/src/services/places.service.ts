@@ -1,5 +1,6 @@
 import { api } from "./api";
-import type { Place, PlaceStatus } from "../types/place";
+import type { Place, PlaceConsumablesSummary, PlaceStatus } from "../types/place";
+import type { Visit } from "../types/visit";
 
 export interface Page<T> {
   count: number;
@@ -8,11 +9,13 @@ export interface Page<T> {
   results: T[];
 }
 
+export type PlaceWithVisits = Place & PlaceConsumablesSummary & { visits: Visit[] };
+
 export const placesService = {
   list: (params: { page?: number; status?: PlaceStatus; search?: string } = {}) =>
     api.get<Page<Place>>("/places/", { params }).then((r) => r.data),
 
-  get: (id: number) => api.get<Place & { visits: any[] }>(`/places/${id}/`).then((r) => r.data),
+  get: (id: number) => api.get<PlaceWithVisits>(`/places/${id}/`).then((r) => r.data),
 
   create: (data: Partial<Place>) => api.post<Place>("/places/", data).then((r) => r.data),
 

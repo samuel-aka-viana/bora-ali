@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { visitsService } from "../services/visits.service";
 import { VisitForm } from "../components/visits/VisitForm";
+import { BackButton } from "../components/ui/BackButton";
 
 export default function EditVisitPage() {
   const { id } = useParams();
@@ -8,11 +9,12 @@ export default function EditVisitPage() {
 
   return (
     <div className="max-w-xl mx-auto p-4">
+      <BackButton />
       <h1 className="text-2xl font-bold mb-4">Edit visit</h1>
       <VisitForm
         onSubmit={async (visit) => {
           await visitsService.update(Number(id), visit);
-          nav(-1 as any);
+          nav(-1);
         }}
       />
     </div>

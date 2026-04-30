@@ -4,6 +4,7 @@ import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { RatingInput } from "../ui/RatingInput";
 import { Button } from "../ui/Button";
+import { Textarea } from "../ui/Textarea";
 
 type Props = {
   value: Partial<VisitItem>;
@@ -13,9 +14,10 @@ type Props = {
 
 export function VisitItemForm({ value, onChange, onRemove }: Props) {
   return (
-    <div className="border border-border rounded-xl p-3 space-y-2 bg-background">
+    <div className="border border-border rounded-xl bg-background p-3 space-y-3">
       <Input
-        label="Item name"
+        label="Consumable name"
+        placeholder="Croissant, espresso, juice..."
         value={value.name || ""}
         onChange={(e) => onChange({ ...value, name: e.target.value })}
       />
@@ -42,6 +44,12 @@ export function VisitItemForm({ value, onChange, onRemove }: Props) {
         step="0.01"
         value={String(value.price ?? "")}
         onChange={(e) => onChange({ ...value, price: e.target.value })}
+      />
+      <Textarea
+        label="Comments"
+        placeholder="Texture, flavor, portion size..."
+        value={value.notes || ""}
+        onChange={(e) => onChange({ ...value, notes: e.target.value })}
       />
       <label className="flex items-center gap-2 text-sm">
         <input

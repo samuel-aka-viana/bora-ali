@@ -13,4 +13,8 @@ from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
+if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
+    from config.telemetry import setup_telemetry
+    setup_telemetry()
+
 application = get_wsgi_application()

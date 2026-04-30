@@ -16,7 +16,7 @@ const labels: Record<PlaceStatus, string> = {
 
 export function Badge({ status }: { status: PlaceStatus }) {
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${map[status]}`}>
+    <span className={`inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-xs font-medium ${map[status]}`}>
       {labels[status]}
     </span>
   );

@@ -13,3 +13,9 @@ export interface Place {
   created_at: string;
   updated_at: string;
 }
+
+export interface PlaceConsumablesSummary {
+  consumables_count: number;
+  average_consumable_rating: number | null;
+  total_consumed_amount: string | null;
+}

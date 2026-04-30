@@ -19,7 +19,7 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
   });
   const [nameError, setNameError] = useState("");
   const [submitError, setSubmitError] = useState("");
-  const upd = (k: keyof Place) => (e: React.ChangeEvent<any>) =>
+  const upd = (k: keyof Place) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setF({ ...f, [k]: e.target.value });
 
   return (

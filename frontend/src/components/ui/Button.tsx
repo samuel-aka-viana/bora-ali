@@ -21,7 +21,7 @@ export function Button({ variant = "primary", size = "md", className = "", ...re
   return (
     <button
       {...rest}
-      className={`rounded-xl font-medium shadow-sm disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl font-medium shadow-sm disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`}
     />
   );
 }

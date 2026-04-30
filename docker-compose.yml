@@ -11,5 +11,15 @@ services:
       - "5432:5432"
     volumes:
       - bora_ali_pgdata:/var/lib/postgresql/data
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    restart: unless-stopped
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4318:4318"     # OTLP HTTP receiver
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
 volumes:
   bora_ali_pgdata:

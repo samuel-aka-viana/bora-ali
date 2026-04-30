@@ -68,7 +68,12 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
       />
 
       <div>
-        <h3 className="font-semibold mb-2">Items ordered</h3>
+        <div className="mb-2">
+          <h3 className="font-semibold">Food and drinks consumed</h3>
+          <p className="text-sm text-muted">
+            Add each consumable with price, rating, and comments.
+          </p>
+        </div>
         <div className="space-y-3">
           {items.map((it, i) => (
             <VisitItemForm
@@ -88,7 +93,7 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
             setItems([...items, { type: "other", rating: 7, price: "0", would_order_again: true }])
           }
         >
-          + Add item
+          + Add consumable
         </Button>
       </div>
 

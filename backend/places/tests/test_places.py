@@ -45,3 +45,17 @@ def test_pagination(auth_client, user):
     r = auth_client.get("/api/places/")
     assert r.data["count"] == 25
     assert len(r.data["results"]) == 20
+
+
+def test_detail_includes_consumables_summary(auth_client, user):
+    place = baker.make("places.Place", user=user)
+    visit = baker.make("places.Visit", place=place)
+    baker.make("places.VisitItem", visit=visit, rating=8, price="12.50")
+    baker.make("places.VisitItem", visit=visit, rating=10, price="18.00")
+
+    r = auth_client.get(f"/api/places/{place.id}/")
+
+    assert r.status_code == 200
+    assert r.data["consumables_count"] == 2
+    assert r.data["average_consumable_rating"] == 9
+    assert r.data["total_consumed_amount"] == "30.50"

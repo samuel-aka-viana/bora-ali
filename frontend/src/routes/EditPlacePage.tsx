@@ -4,6 +4,7 @@ import { placesService } from "../services/places.service";
 import type { Place } from "../types/place";
 import { PlaceForm } from "../components/places/PlaceForm";
 import { LoadingState } from "../components/ui/LoadingState";
+import { BackButton } from "../components/ui/BackButton";
 
 export default function EditPlacePage() {
   const { id } = useParams();
@@ -11,13 +12,14 @@ export default function EditPlacePage() {
   const [place, setPlace] = useState<Place | null>(null);
 
   useEffect(() => {
-    placesService.get(Number(id)).then(setPlace as any);
+    placesService.get(Number(id)).then((loadedPlace) => setPlace(loadedPlace));
   }, [id]);
 
   if (!place) return <LoadingState />;
 
   return (
     <div className="max-w-xl mx-auto p-4">
+      <BackButton fallbackTo={`/places/${place.id}`} />
       <h1 className="text-2xl font-bold mb-4">Edit place</h1>
       <PlaceForm
         initial={place}

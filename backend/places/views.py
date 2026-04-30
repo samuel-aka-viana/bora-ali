@@ -21,7 +21,10 @@ class PlaceViewSet(viewsets.ModelViewSet):
     ordering_fields = ("created_at", "updated_at", "name")
 
     def get_queryset(self):
-        return Place.objects.filter(user=self.request.user)
+        queryset = Place.objects.filter(user=self.request.user)
+        if self.action == "retrieve":
+            return queryset.prefetch_related("visits__items")
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ("create", "update", "partial_update"):
