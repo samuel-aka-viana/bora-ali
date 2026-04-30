@@ -1,8 +1,9 @@
 import base64
+import functools
 import hashlib
 import io
 import logging
-import time
+import secrets
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -20,6 +21,7 @@ _HKDF_SALT = b"bora-ali-media-v1"
 
 class ImageService:
     @staticmethod
+    @functools.lru_cache(maxsize=128)
     def _derive_key(user_id: int) -> Fernet:
         hkdf = HKDF(
             algorithm=hashes.SHA256(),
@@ -34,8 +36,8 @@ class ImageService:
     @staticmethod
     def make_path(user_id: int, category: str, data: bytes) -> str:
         sha = hashlib.sha256(data).hexdigest()[:16]
-        ts = int(time.time() * 1000)
-        return f"users/{user_id}/{category}/{sha}_{ts}"
+        token = secrets.token_hex(8)
+        return f"users/{user_id}/{category}/{sha}_{token}"
 
     @staticmethod
     def encrypt(data: bytes, user_id: int) -> bytes:

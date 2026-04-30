@@ -21,7 +21,7 @@ def test_make_path_format():
     parts = path.split("/")[-1].split("_")
     assert len(parts) == 2
     assert len(parts[0]) == 16  # sha256[:16]
-    assert parts[1].isdigit()   # timestamp_ms
+    assert len(parts[1]) == 16  # token_hex(8) = 16 hex chars
 
 
 @pytest.mark.django_db
