@@ -88,7 +88,7 @@ class TestDataIsolation:
         visit = baker.make("places.Visit", place=place)
         item = baker.make("places.VisitItem", visit=visit)
         r = auth_client.patch(
-            f"/api/items/{item.public_id}/",
+            f"/api/visit-items/{item.public_id}/",
             {"name": "Hackeado"},
             format="json",
         )

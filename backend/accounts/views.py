@@ -45,6 +45,9 @@ class LogoutView(APIView):
 
 class MeView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
+    # Bloqueia PUT explicitamente — apenas GET e PATCH permitidos.
+    # PUT poderia sobrescrever campos opcionais (ex: email) com blank inesperadamente.
+    http_method_names = ["get", "patch", "head", "options"]
 
     def get_object(self):
         return self.request.user

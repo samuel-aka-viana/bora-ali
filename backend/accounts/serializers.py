@@ -16,7 +16,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "username", "email", "password", "confirm_password")
+        # "id" removido: expunha o PK sequencial interno na resposta de registro.
+        fields = ("username", "email", "password", "confirm_password")
 
     def validate(self, attrs):
         if attrs["password"] != attrs.pop("confirm_password"):

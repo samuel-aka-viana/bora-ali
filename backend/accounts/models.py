@@ -36,7 +36,7 @@ class UserProfile(models.Model):
         verbose_name=_("user"),
     )
     nickname = models.CharField(max_length=80, blank=True, verbose_name=_("nickname"))
-    profile_photo = models.FileField(
+    profile_photo = models.ImageField(
         upload_to="profiles/",
         blank=True,
         null=True,

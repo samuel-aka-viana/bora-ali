@@ -20,6 +20,28 @@ DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
 USE_VERSITYGW = os.getenv("USE_VERSITYGW", "False") == "True"
 
+# Impede deploy acidental com SECRET_KEY padrão ou fraca.
+# 50 chars é o mínimo recomendado para HS256 com segurança adequada.
+if not DEBUG and (SECRET_KEY in ("dev-secret", "changeme") or len(SECRET_KEY) < 50):
+    raise RuntimeError(
+        "DJANGO_SECRET_KEY inválida: defina uma chave aleatória forte (mínimo 50 caracteres) "
+        "antes de rodar em produção. Use: "
+        "python -c \"from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())\""
+    )
+
+# Configurações de segurança HTTPS para produção.
+# Em desenvolvimento (DEBUG=True) são desativadas para não bloquear HTTP local.
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000        # 1 ano
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
