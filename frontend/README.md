@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# Bora Ali Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend webapp built with React + TypeScript + Vite.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Main Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# quality
+npm run lint
+npm run build
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# local preview for performance runs
+npm run perf:preview
+
+# lighthouse reports
+npm run perf:lighthouse:mobile
+npm run perf:lighthouse:desktop
 ```
+
+Reports are generated at:
+
+- `lighthouse-report-mobile.html`
+- `lighthouse-report-desktop.html`
+
+## Recent Implementations
+
+### Performance and Lighthouse
+
+- Added Lighthouse tooling (`lighthouse` as dev dependency).
+- Added scripts for mobile and desktop Lighthouse runs.
+- Routes were code-split with `React.lazy` + `Suspense` in `src/App.tsx` to reduce initial JS payload.
+- Result: mobile `unused-javascript` estimate dropped from around `109 KiB` to around `32 KiB` while keeping high performance score.
+
+### SEO
+
+- Added `public/robots.txt`.
+- Added meta description in `index.html`.
+- Lighthouse SEO score on `/login` reached `1.00` in latest run.
+
+### Accessibility
+
+- Updated login UI contrast (text and primary color usage) to remove color-contrast failures.
+- Latest Lighthouse accessibility score on `/login`: `1.00`.
+
+### Render Blocking
+
+- Removed remote Google Fonts stylesheet from `index.html` and moved to system font stack fallbacks in Tailwind/CSS, reducing external render-blocking dependency.
+
+## Tech Stack
+
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- i18next

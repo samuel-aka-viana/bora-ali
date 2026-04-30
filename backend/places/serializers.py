@@ -214,9 +214,16 @@ class PlaceWriteSerializer(FlexFieldsModelSerializer):
             "notes",
             "cover_photo",
         )
-        read_only_fields = ("public_id", "latitude", "longitude")
+        read_only_fields = ("public_id",)
 
     def _sync_coords(self, validated_data: dict) -> dict:
+        has_manual_coords = (
+            validated_data.get("latitude") is not None
+            and validated_data.get("longitude") is not None
+        )
+        if has_manual_coords:
+            return validated_data
+
         maps_url = validated_data.get("maps_url", "")
         if maps_url:
             lat, lng = _extract_coords(maps_url)

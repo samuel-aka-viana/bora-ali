@@ -46,7 +46,7 @@ export default function LoginPage() {
         <h1 className="font-fraunces text-3xl font-bold text-center text-text">
           {t("auth.login.title")}
         </h1>
-        <p className="text-center text-sm text-muted -mt-2">{t("auth.login.subtitle")}</p>
+        <p className="text-center -mt-2 text-sm text-text/75">{t("auth.login.subtitle")}</p>
         {showSessionMessage && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {t("auth.login.sessionExpired")}
@@ -69,9 +69,9 @@ export default function LoginPage() {
         <Button type="submit" className="w-full">
           {t("auth.login.submit")}
         </Button>
-        <p className="text-center text-sm text-muted">
+        <p className="text-center text-sm text-text/75">
           {t("auth.login.noAccount")}{" "}
-          <Link to="/register" className="text-primary font-medium">
+          <Link to="/register" className="font-semibold text-primary">
             {t("auth.login.register")}
           </Link>
         </p>

@@ -4,17 +4,17 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        fraunces: ["Fraunces", "Georgia", "serif"],
-        sans: ["DM Sans", "system-ui", "sans-serif"],
+        fraunces: ["Georgia", "Times New Roman", "serif"],
+        sans: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "Arial", "sans-serif"],
       },
       colors: {
-        primary: "#EA1D2C",
-        "primary-dark": "#B91422",
+        primary: "#C1121F",
+        "primary-dark": "#8F0D17",
         accent: "#F4A261",
         background: "#FAF7F2",
         surface: "#FFFFFF",
         text: "#1A1208",
-        muted: "#8C7B6B",
+        muted: "#6F5D4D",
         border: "#E8E0D8",
         success: "#16A34A",
         warning: "#F59E0B",

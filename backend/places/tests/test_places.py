@@ -26,6 +26,45 @@ def test_create_place_returns_public_id(auth_client):
     assert "id" not in r.data
 
 
+def test_create_place_accepts_manual_coordinates(auth_client):
+    r = auth_client.post(
+        "/api/places/",
+        {
+            "name": "Café X",
+            "category": "café",
+            "status": "want_to_visit",
+            "latitude": "-3.1019444",
+            "longitude": "-60.0250000",
+        },
+        format="json",
+    )
+
+    assert r.status_code == 201
+    assert r.data["latitude"] == "-3.1019444"
+    assert r.data["longitude"] == "-60.0250000"
+
+
+def test_manual_coordinates_override_maps_url(auth_client):
+    r = auth_client.post(
+        "/api/places/",
+        {
+            "name": "Café X",
+            "category": "café",
+            "status": "want_to_visit",
+            "maps_url": (
+                "https://maps.google.com/maps?q=-3.0000000,-60.0000000"
+            ),
+            "latitude": "-3.1019444",
+            "longitude": "-60.0250000",
+        },
+        format="json",
+    )
+
+    assert r.status_code == 201
+    assert r.data["latitude"] == "-3.1019444"
+    assert r.data["longitude"] == "-60.0250000"
+
+
 def test_list_only_own(auth_client, user, other_user):
     baker.make("places.Place", user=user, _quantity=2)
     baker.make("places.Place", user=other_user, _quantity=3)

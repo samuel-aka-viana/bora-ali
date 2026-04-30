@@ -182,6 +182,35 @@ npm run dev
 
 Aplicação estará em: `http://localhost:5173`
 
+## 🆕 Atualizações Recentes (Frontend)
+
+As últimas melhorias focaram em performance inicial, SEO técnico e acessibilidade do fluxo de login.
+
+### Performance (Lighthouse)
+
+- Adicionado `lighthouse` no frontend e scripts dedicados:
+  - `npm run perf:preview`
+  - `npm run perf:lighthouse:mobile`
+  - `npm run perf:lighthouse:desktop`
+- Implementado code-splitting de rotas com `React.lazy` + `Suspense` em `frontend/src/App.tsx`.
+- Resultado prático: redução de JS não utilizado no mobile (`/login`) de ~`109 KiB` para ~`32 KiB` (estimado pelo Lighthouse), mantendo `performance` em ~`0.99`.
+
+### SEO
+
+- Adicionado `frontend/public/robots.txt`.
+- Adicionada `meta description` em `frontend/index.html`.
+- Score de SEO no mobile (`/login`) passou para `1.00` na última validação.
+
+### Acessibilidade
+
+- Ajustes de contraste no login (tipografia e cor primária).
+- Score de acessibilidade no mobile (`/login`) passou para `1.00`.
+
+### Observação de Fontes
+
+- Removida dependência de stylesheet remota de Google Fonts no `index.html`.
+- Frontend agora usa stack de fontes do sistema (fallback local), reduzindo recurso externo render-blocking.
+
 ## 📁 Estrutura do Projeto
 
 ```

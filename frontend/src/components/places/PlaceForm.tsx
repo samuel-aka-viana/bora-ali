@@ -7,6 +7,7 @@ import { Textarea } from "../ui/Textarea";
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
 import { ErrorMessage } from "../ui/ErrorMessage";
+import { LocationPicker } from "../ui/LocationPicker";
 import { getApiErrorState } from "../../services/api-errors";
 
 type PlacePayload = Partial<Omit<Place, "cover_photo">> & { cover_photo?: string | File };
@@ -59,6 +60,16 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
       <Input label={t("placeForm.address")} value={f.address || ""} onChange={upd("address")} error={fieldErrors.address} />
       <Input label={t("placeForm.instagram")} value={f.instagram_url || ""} onChange={upd("instagram_url")} error={fieldErrors.instagram_url} />
       <Input label={t("placeForm.maps")} value={f.maps_url || ""} onChange={upd("maps_url")} error={fieldErrors.maps_url} />
+      <LocationPicker
+        label={t("placeForm.location")}
+        hint={t("placeForm.locationHint")}
+        clearLabel={t("placeForm.clearLocation")}
+        zoomInLabel={t("placeForm.zoomIn")}
+        zoomOutLabel={t("placeForm.zoomOut")}
+        latitude={f.latitude}
+        longitude={f.longitude}
+        onChange={({ latitude, longitude }) => setF({ ...f, latitude, longitude })}
+      />
       <Select
         label={t("placeForm.status")}
         value={f.status}
