@@ -24,16 +24,19 @@ graph TB
     
     subgraph Database["Data & Observability"]
         DB["🗄️ PostgreSQL<br/>User → Place → Visit → VisitItem"]
+        Storage["🪣 VersityGW<br/>S3-compatible API + POSIX backend"]
         Jaeger["📊 Jaeger<br/>OpenTelemetry Traces"]
     end
     
     Browser -->|HTTP/REST| API
     API -->|SQL| DB
+    API -->|S3 API| Storage
     API -->|OTLP| Jaeger
     
     style Browser fill:#61dafb,stroke:#333,color:#000
     style API fill:#092e20,stroke:#333,color:#fff
     style DB fill:#336791,stroke:#333,color:#fff
+    style Storage fill:#f59e0b,stroke:#333,color:#000
     style Jaeger fill:#13b9fd,stroke:#333,color:#fff
 ```
 
@@ -44,6 +47,7 @@ graph TB
 | **Frontend** | React 19 + Vite + TypeScript + Tailwind CSS |
 | **Backend** | Django 5 + Django REST Framework + SimpleJWT |
 | **Database** | PostgreSQL 16 |
+| **Storage** | VersityGW v1.4.1 + backend POSIX + API S3-compatible |
 | **Observability** | Jaeger + OpenTelemetry |
 | **Auth** | JWT com refresh token rotation |
 | **Testing** | pytest (backend) + Vitest (frontend) |
@@ -63,7 +67,42 @@ git clone <repository-url>
 cd bora-ali
 ```
 
-### 2️⃣ Iniciar serviços (PostgreSQL + Jaeger)
+### 2️⃣ Configurar variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto, na mesma pasta do `docker-compose.yml`:
+
+```env
+DJANGO_SECRET_KEY=changeme
+DJANGO_DEBUG=True
+
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,favored-scalded-tusk.ngrok-free.dev
+
+POSTGRES_DB=bora_ali
+POSTGRES_USER=bora
+POSTGRES_PASSWORD=bora
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8080,https://favored-scalded-tusk.ngrok-free.dev
+CSRF_TRUSTED_ORIGINS=http://localhost:5173,http://localhost:8080,https://favored-scalded-tusk.ngrok-free.dev
+
+USE_VERSITYGW=True
+
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_STORAGE_BUCKET_NAME=bora-ali
+AWS_S3_REGION_NAME=us-east-1
+AWS_DEFAULT_REGION=us-east-1
+AWS_S3_ENDPOINT_URL=http://localhost:8081
+AWS_S3_ADDRESSING_STYLE=path
+AWS_S3_SIGNATURE_VERSION=s3v4
+AWS_DEFAULT_ACL=
+
+VERSITYGW_ACCESS_KEY=minioadmin
+VERSITYGW_SECRET_KEY=minioadmin
+```
+
+### 3️⃣ Iniciar serviços (PostgreSQL + Jaeger + VersityGW)
 
 ```bash
 docker compose up -d
@@ -72,8 +111,34 @@ docker compose up -d
 Isso inicia:
 - **PostgreSQL**: porta `5432`
 - **Jaeger UI**: `http://localhost:16686`
+- **VersityGW S3 API**: `http://localhost:8081`
+- **VersityGW WebGUI**: `http://localhost:8082`
 
-### 3️⃣ Configurar Backend
+### 4️⃣ Criar bucket no VersityGW
+
+O bucket usado pelo Django é definido por `AWS_STORAGE_BUCKET_NAME=bora-ali` e precisa existir antes dos uploads.
+
+```bash
+export AWS_ACCESS_KEY_ID=minioadmin
+export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_DEFAULT_REGION=us-east-1
+
+aws \
+  --endpoint-url http://localhost:8081 \
+  --region us-east-1 \
+  s3api create-bucket \
+  --bucket bora-ali
+```
+
+Valide:
+
+```bash
+aws --endpoint-url http://localhost:8081 --region us-east-1 s3 ls
+```
+
+Não use `aws s3 mb` neste setup. O comando pode enviar `LocationConstraint` incompatível e retornar `InvalidLocationConstraint`.
+
+### 5️⃣ Configurar Backend
 
 ```bash
 cd backend
@@ -87,8 +152,8 @@ source .venv/bin/activate  # Linux/Mac
 # Instalar dependências
 pip install -r requirements.txt
 
-# Configurar variáveis de ambiente
-cp .env.example .env
+# O backend usa as variáveis do .env da raiz ou do backend, conforme o loader do projeto.
+# Se o projeto carregar backend/.env, copie os mesmos valores da raiz para backend/.env.
 
 # Executar migrações
 python manage.py migrate
@@ -103,7 +168,7 @@ python manage.py runserver
 API estará em: `http://localhost:8000/api/`  
 Docs Swagger: `http://localhost:8000/api/docs/`
 
-### 4️⃣ Configurar Frontend
+### 6️⃣ Configurar Frontend
 
 ```bash
 cd ../frontend
@@ -225,10 +290,104 @@ Rate limit: **10 requisições/minuto** em endpoints de auth.
 
 - ✅ **Propriedade**: Cada usuário só vê seus próprios dados
 - ✅ **Ratings**: Escala 0-10 (inteiros)
-- ✅ **Fotos**: Armazenam apenas caminhos (MVP não tem upload)
+- ✅ **Arquivos/Fotos**: armazenamento via VersityGW usando API S3-compatible e persistência POSIX local
 - ✅ **Paginação**: Todos os endpoints de lista retornam 20 itens/página
 
+## 🐳 Docker Compose
+
+O `docker-compose.yml` da raiz sobe PostgreSQL, Jaeger e VersityGW. O VersityGW expõe API S3-compatible na porta `8081` e WebGUI na porta `8082`, persistindo dados em backend POSIX no volume `bora_ali_storage`.
+
+```yaml
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - bora_ali_pgdata:/var/lib/postgresql/data
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  storage:
+    image: ghcr.io/versity/versitygw:v1.4.1
+    restart: unless-stopped
+    ports:
+      - "8081:7070" # S3 API
+      - "8082:7071" # WebGUI
+    environment:
+      ROOT_ACCESS_KEY: ${VERSITYGW_ACCESS_KEY}
+      ROOT_SECRET_KEY: ${VERSITYGW_SECRET_KEY}
+
+      VGW_PORT: ":7070"
+      VGW_BACKEND: posix
+      VGW_BACKEND_ARGS: /data
+
+      VGW_WEBUI_PORT: ":7071"
+      VGW_WEBUI_NO_TLS: "true"
+
+      # Necessário para a WebGUI conversar com o endpoint S3
+      VGW_CORS_ALLOW_ORIGIN: "*"
+
+    volumes:
+      - bora_ali_storage:/data
+
+volumes:
+  bora_ali_pgdata:
+  bora_ali_storage:
+```
+
+### Endpoints locais
+
+| Serviço | URL | Uso |
+|--------|-----|-----|
+| PostgreSQL | `localhost:5432` | Banco de dados local |
+| Jaeger | `http://localhost:16686` | Visualização de traces |
+| VersityGW S3 API | `http://localhost:8081` | Endpoint usado pelo Django/boto3 |
+| VersityGW WebGUI | `http://localhost:8082` | Interface web do storage |
+
+A tela `AccessDenied` em `http://localhost:8081/` é esperada, porque essa porta é a API S3. A interface web fica em `http://localhost:8082`.
+
+
 ## 🛠️ Comandos Essenciais
+
+### Storage / VersityGW
+
+```bash
+# Subir somente storage
+docker compose up -d storage
+
+# Logs do storage
+docker compose logs -f storage
+
+# Criar bucket usado pelo Django
+export AWS_ACCESS_KEY_ID=minioadmin
+export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_DEFAULT_REGION=us-east-1
+
+aws --endpoint-url http://localhost:8081 --region us-east-1 s3api create-bucket --bucket bora-ali
+
+# Listar buckets
+aws --endpoint-url http://localhost:8081 --region us-east-1 s3 ls
+
+# Upload de teste
+echo "teste" > teste.txt
+aws --endpoint-url http://localhost:8081 --region us-east-1 s3 cp teste.txt s3://bora-ali/teste.txt
+aws --endpoint-url http://localhost:8081 --region us-east-1 s3 ls s3://bora-ali/
+```
 
 ### Backend
 
@@ -390,7 +549,7 @@ Os seguintes não serão implementados nesta fase:
 - ❌ Redes sociais (likes, comments, seguir)
 - ❌ Geolocalização
 - ❌ Google Places API
-- ❌ Upload de arquivos
+- ❌ Upload público sem autenticação
 - ❌ Integração Instagram
 - ❌ Pagamentos
 - ❌ PWA
