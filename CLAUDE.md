@@ -51,14 +51,64 @@ Services: `localhost` (frontend), `localhost/api/` (API), `:8081` (VersityGW), `
 
 ```
 backend/
-  config/         # settings, urls, wsgi, telemetry
-  core/           # PublicIdModel (models.py), exceptions, messages, exception_handler, viewsets
-  accounts/       # auth: UserSession, SingleSessionJWTAuthentication, throttles, views, serializers
-  places/         # Place, Visit, VisitItem — models, serializers, viewsets
-  locale/pt_BR/   # .po/.mo files
+  config/             # settings.py, urls.py, wsgi.py, telemetry, test_settings.py
+  core/               # shared utilities (no Django app entry in INSTALLED_APPS)
+    models.py         # PublicIdModel (abstract, adds public_id UUID)
+    exceptions.py     # typed semantic exceptions
+    exception_handler.py  # semantic_exception_handler → {"code","detail"}
+    viewsets.py       # shared viewset mixins
+    validators.py     # validate_image_upload(), validate_safe_url()
+    storage_urls.py   # build_public_media_url() — S3 presigned or local URL
+    image_service.py  # ImageService — encrypt/decrypt/save/delete/detect_content_type
+    media_views.py    # serve_user_media — authenticated GET /api/media/<path>
+    messages.py       # shared i18n message constants
+    tests/            # test_models.py, test_security.py, test_image_service.py, test_media_views.py
+  accounts/           # auth: UserSession, UserProfile, SingleSessionJWTAuthentication
+    apps.py           # AccountsConfig.ready() imports accounts.signals
+    signals.py        # post_delete → cleanup UserProfile.profile_photo via ImageService
+    tests/            # test_auth.py, test_single_session.py, test_serializer_image.py
+  places/             # Place, Visit, VisitItem
+    apps.py           # PlacesConfig.ready() imports places.signals
+    signals.py        # post_delete → cleanup Place/Visit/VisitItem photos via ImageService
+    tests/            # test_places.py, test_visits.py, test_visit_items.py, test_image_signals.py, test_serializer_images.py
+  locale/pt_BR/       # .po/.mo files
 ```
 
-Endpoints: `/api/auth/{register,login,refresh,logout,me}/` · `/api/places/` · `/api/places/{public_id}/visits/` · `/api/visits/{public_id}/items/` · `/api/docs/`
+Endpoints: `/api/auth/{register,login,refresh,logout,me}/` · `/api/places/` · `/api/places/{public_id}/visits/` · `/api/visits/{public_id}/items/` · `/api/media/<path>` · `/api/docs/`
+
+## Image Handling
+
+All image saves go through `core.image_service.ImageService` — never raw Django ImageField save.
+
+**Storage path**: `users/{user_id}/{category}/{sha256[:16]}_{timestamp_ms}` — no extension, non-identifiable.
+
+**Categories by model**:
+- `UserProfile.profile_photo` → `profiles`
+- `Place.cover_photo` → `places/covers`
+- `Visit.photo` → `visits/photos`
+- `VisitItem.photo` → `visit_items/photos`
+
+**Encryption**: Fernet symmetric, per-user key derived via `HKDF(SHA256, salt=b"bora-ali-media-v1", info=user_id, ikm=SECRET_KEY)`. Files stored as encrypted blobs regardless of USE_VERSITYGW.
+
+**Serving**: `GET /api/media/<path>` → `serve_user_media` view — authenticates JWT, checks `user_id` matches path prefix `users/{id}/`, decrypts, streams with detected Content-Type. Returns 404 for missing/wrong-user (never 403).
+
+**Serializer pattern**: Write serializers pop the image field from `validated_data`, call `ImageService.save()`, set path on instance. On update, old path deleted before saving new one. On create, save model first, then save image.
+
+**Orphan cleanup**: `post_delete` signals in `accounts/signals.py` and `places/signals.py` call `ImageService.delete()`. Signals registered in `AccountsConfig.ready()` / `PlacesConfig.ready()`.
+
+## Testing
+
+- Pytest + pytest-django. Config: `backend/pytest.ini` → `DJANGO_SETTINGS_MODULE=config.test_settings`
+- `config/test_settings.py` — SQLite in-memory, MD5 password hasher (fast), inherits from settings.py
+- Tests live in `app/tests/` folders with `__init__.py`
+- Fixtures: `model_bakery.baker` for quick instances, `APIRequestFactory` for serializer context
+- Image tests need `@override_settings(SECRET_KEY=..., STORAGES={...})` + `tmp_path` + `settings.MEDIA_ROOT = str(tmp_path)`
+- Run from `backend/` with venv active: `pytest` / `pytest accounts/` / `pytest -k test_name`
+
+## Worktrees
+
+Directory: `.worktrees/` (project-local, in root `.gitignore`).
+Create with: `git worktree add .worktrees/<branch> -b <branch>`
 
 ## Frontend Structure
 
