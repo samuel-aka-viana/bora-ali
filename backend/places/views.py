@@ -19,6 +19,7 @@ from .serializers import (
 
 class PlaceViewSet(ViewSetBase):
     queryset = Place.objects.all()
+    lookup_field = "public_id"
     filterset_class = PlaceFilter
     search_fields = ("name", "category", "address")
     ordering_fields = ("created_at", "updated_at", "name")
@@ -46,7 +47,7 @@ class PlaceViewSet(ViewSetBase):
         return queryset
 
     @action(detail=True, methods=["post"], url_path="visits")
-    def add_visit(self, request, pk=None):
+    def add_visit(self, request, public_id=None):
         place = self.get_object()
         validated_data = self.validate_action_params(request)
         visit = Visit.objects.create(place=place, **validated_data)
@@ -55,6 +56,7 @@ class PlaceViewSet(ViewSetBase):
 
 class VisitViewSet(WriteViewSetBase):
     queryset = Visit.objects.all()
+    lookup_field = "public_id"
     serializer_class = VisitWriteSerializer
     filterset_class = VisitFilter
     action_param_serializers = {
@@ -67,7 +69,7 @@ class VisitViewSet(WriteViewSetBase):
         )
 
     @action(detail=True, methods=["post"], url_path="items")
-    def add_item(self, request, pk=None):
+    def add_item(self, request, public_id=None):
         visit = self.get_object()
         validated_data = self.validate_action_params(request)
         item = VisitItem.objects.create(visit=visit, **validated_data)
@@ -76,6 +78,7 @@ class VisitViewSet(WriteViewSetBase):
 
 class VisitItemViewSet(WriteViewSetBase):
     queryset = VisitItem.objects.all()
+    lookup_field = "public_id"
     serializer_class = VisitItemWriteSerializer
     filterset_class = VisitItemFilter
 

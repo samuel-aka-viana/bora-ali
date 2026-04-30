@@ -44,16 +44,19 @@ class ViewSetBase(ActionParamsMixin, viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         with transaction.atomic():
-            logger.info("Updating %s id=%s by user=%s", self.queryset.model.__name__, kwargs.get("pk"), request.user)
+            lookup = kwargs.get(self.lookup_field, kwargs.get("pk"))
+            logger.info("Updating %s %s=%s by user=%s", self.queryset.model.__name__, self.lookup_field, lookup, request.user)
             return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
+                lookup = kwargs.get(self.lookup_field, kwargs.get("pk"))
                 logger.warning(
-                    "Deleting %s id=%s by user=%s",
+                    "Deleting %s %s=%s by user=%s",
                     self.queryset.model.__name__,
-                    kwargs.get("pk"),
+                    self.lookup_field,
+                    lookup,
                     request.user,
                 )
                 return super().destroy(request, *args, **kwargs)
@@ -65,16 +68,19 @@ class ViewSetBase(ActionParamsMixin, viewsets.ModelViewSet):
 class WriteViewSetBase(ActionParamsMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     def update(self, request, *args, **kwargs):
         with transaction.atomic():
-            logger.info("Updating %s id=%s by user=%s", self.queryset.model.__name__, kwargs.get("pk"), request.user)
+            lookup = kwargs.get(self.lookup_field, kwargs.get("pk"))
+            logger.info("Updating %s %s=%s by user=%s", self.queryset.model.__name__, self.lookup_field, lookup, request.user)
             return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
+                lookup = kwargs.get(self.lookup_field, kwargs.get("pk"))
                 logger.warning(
-                    "Deleting %s id=%s by user=%s",
+                    "Deleting %s %s=%s by user=%s",
                     self.queryset.model.__name__,
-                    kwargs.get("pk"),
+                    self.lookup_field,
+                    lookup,
                     request.user,
                 )
                 return super().destroy(request, *args, **kwargs)
