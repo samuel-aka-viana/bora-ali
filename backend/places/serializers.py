@@ -8,6 +8,10 @@ from core.validators import validate_image_upload, validate_safe_url
 from .models import Place, Visit, VisitItem
 
 
+def _get_owner_id(context) -> int:
+    return context["request"].user.id
+
+
 def _extract_coords(url: str) -> tuple[float, float] | tuple[None, None]:
     """Extract (lat, lng) from a Google Maps URL, or return (None, None)."""
     patterns = [
@@ -61,6 +65,24 @@ class VisitItemWriteSerializer(FlexFieldsModelSerializer):
             "notes",
             "photo",
         )
+
+    def _handle_photo(self, instance, photo_file):
+        from core.image_service import ImageService
+        old_path = instance.photo.name if instance.photo else None
+        if old_path:
+            ImageService.delete(old_path)
+        if photo_file is None:
+            instance.photo = None
+        else:
+            instance.photo = ImageService.save(photo_file, _get_owner_id(self.context), "visit_items/photos")
+        instance.save(update_fields=["photo"])
+
+    def update(self, instance, validated_data):
+        photo_file = validated_data.pop("photo", serializers.empty)
+        instance = super().update(instance, validated_data)
+        if photo_file is not serializers.empty:
+            self._handle_photo(instance, photo_file)
+        return instance
 
 
 class VisitSerializer(FlexFieldsModelSerializer):
@@ -142,6 +164,24 @@ class VisitWriteSerializer(FlexFieldsModelSerializer):
             "general_notes",
             "photo",
         )
+
+    def _handle_photo(self, instance, photo_file):
+        from core.image_service import ImageService
+        old_path = instance.photo.name if instance.photo else None
+        if old_path:
+            ImageService.delete(old_path)
+        if photo_file is None:
+            instance.photo = None
+        else:
+            instance.photo = ImageService.save(photo_file, _get_owner_id(self.context), "visits/photos")
+        instance.save(update_fields=["photo"])
+
+    def update(self, instance, validated_data):
+        photo_file = validated_data.pop("photo", serializers.empty)
+        instance = super().update(instance, validated_data)
+        if photo_file is not serializers.empty:
+            self._handle_photo(instance, photo_file)
+        return instance
 
 
 class PlaceListSerializer(FlexFieldsModelSerializer):
@@ -271,9 +311,30 @@ class PlaceWriteSerializer(FlexFieldsModelSerializer):
             validated_data["longitude"] = lng
         return validated_data
 
+    def _handle_photo(self, instance, photo_file):
+        from core.image_service import ImageService
+        old_path = instance.cover_photo.name if instance.cover_photo else None
+        if old_path:
+            ImageService.delete(old_path)
+        if photo_file is None:
+            instance.cover_photo = None
+        else:
+            instance.cover_photo = ImageService.save(photo_file, _get_owner_id(self.context), "places/covers")
+        instance.save(update_fields=["cover_photo"])
+
     def create(self, validated_data):
+        from core.image_service import ImageService
         validated_data["user"] = self.context["request"].user
-        return super().create(self._sync_coords(validated_data))
+        photo_file = validated_data.pop("cover_photo", None)
+        instance = super().create(self._sync_coords(validated_data))
+        if photo_file:
+            instance.cover_photo = ImageService.save(photo_file, instance.user_id, "places/covers")
+            instance.save(update_fields=["cover_photo"])
+        return instance
 
     def update(self, instance, validated_data):
-        return super().update(instance, self._sync_coords(validated_data))
+        photo_file = validated_data.pop("cover_photo", serializers.empty)
+        instance = super().update(instance, self._sync_coords(validated_data))
+        if photo_file is not serializers.empty:
+            self._handle_photo(instance, photo_file)
+        return instance
