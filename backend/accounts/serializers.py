@@ -85,6 +85,8 @@ class UserSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
+        from core.image_service import ImageService
+
         profile_data = {
             "nickname": validated_data.pop("nickname", serializers.empty),
             "profile_photo": validated_data.pop("profile_photo", serializers.empty),
@@ -95,10 +97,21 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
 
         profile = self._get_profile(instance)
+
         if profile_data["nickname"] is not serializers.empty:
             profile.nickname = profile_data["nickname"]
-        if profile_data["profile_photo"] is not serializers.empty:
-            profile.profile_photo = profile_data["profile_photo"]
+
+        photo_file = profile_data["profile_photo"]
+        if photo_file is not serializers.empty:
+            old_path = profile.profile_photo.name if profile.profile_photo else None
+            if old_path:
+                ImageService.delete(old_path)
+            if photo_file is None:
+                profile.profile_photo = None
+            else:
+                path = ImageService.save(photo_file, instance.id, "profiles")
+                profile.profile_photo = path
+
         profile.save()
         return instance
 
