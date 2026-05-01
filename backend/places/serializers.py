@@ -1,11 +1,15 @@
 import re
 
+from core.storage_urls import build_public_media_url
+from core.validators import validate_image_upload, validate_safe_url
 from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
 
-from core.storage_urls import build_public_media_url
-from core.validators import validate_image_upload, validate_safe_url
 from .models import Place, Visit, VisitItem
+
+
+def _get_owner_id(context) -> int:
+    return context["request"].user.id
 
 
 def _extract_coords(url: str) -> tuple[float, float] | tuple[None, None]:
@@ -47,8 +51,12 @@ class VisitItemSerializer(FlexFieldsModelSerializer):
 
 
 class VisitItemWriteSerializer(FlexFieldsModelSerializer):
-    notes = serializers.CharField(required=False, allow_blank=True, max_length=5000)
-    photo = serializers.ImageField(required=False, allow_null=True, validators=[validate_image_upload])
+    notes = serializers.CharField(
+        required=False, allow_blank=True, max_length=5000
+    )
+    photo = serializers.ImageField(
+        required=False, allow_null=True, validators=[validate_image_upload]
+    )
 
     class Meta:
         model = VisitItem
@@ -61,6 +69,34 @@ class VisitItemWriteSerializer(FlexFieldsModelSerializer):
             "notes",
             "photo",
         )
+
+    def _handle_photo(self, instance, photo_file):
+        from core.image_service import ImageService
+
+        old_path = instance.photo.name if instance.photo else None
+        if old_path:
+            ImageService.delete(old_path)
+        if photo_file is None:
+            instance.photo = None
+        else:
+            instance.photo = ImageService.save(
+                photo_file, _get_owner_id(self.context), "visit_items/photos"
+            )
+        instance.save(update_fields=["photo"])
+
+    def create(self, validated_data):
+        photo_file = validated_data.pop("photo", None)
+        instance = super().create(validated_data)
+        if photo_file:
+            self._handle_photo(instance, photo_file)
+        return instance
+
+    def update(self, instance, validated_data):
+        photo_file = validated_data.pop("photo", serializers.empty)
+        instance = super().update(instance, validated_data)
+        if photo_file is not serializers.empty:
+            self._handle_photo(instance, photo_file)
+        return instance
 
 
 class VisitSerializer(FlexFieldsModelSerializer):
@@ -86,9 +122,18 @@ class VisitSerializer(FlexFieldsModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("public_id", "place", "items", "created_at", "updated_at")
+        read_only_fields = (
+            "public_id",
+            "place",
+            "items",
+            "created_at",
+            "updated_at",
+        )
         expandable_fields = {
-            "place": ("places.serializers.PlaceListSerializer", {"read_only": True}),
+            "place": (
+                "places.serializers.PlaceListSerializer",
+                {"read_only": True},
+            ),
             "items": (
                 "places.serializers.VisitItemSerializer",
                 {"many": True, "read_only": True},
@@ -119,7 +164,10 @@ class VisitExpandSerializer(FlexFieldsModelSerializer):
         )
         read_only_fields = fields
         expandable_fields = {
-            "place": ("places.serializers.PlaceListSerializer", {"read_only": True}),
+            "place": (
+                "places.serializers.PlaceListSerializer",
+                {"read_only": True},
+            ),
             "items": (
                 "places.serializers.VisitItemSerializer",
                 {"many": True, "read_only": True},
@@ -128,8 +176,12 @@ class VisitExpandSerializer(FlexFieldsModelSerializer):
 
 
 class VisitWriteSerializer(FlexFieldsModelSerializer):
-    general_notes = serializers.CharField(required=False, allow_blank=True, max_length=5000)
-    photo = serializers.ImageField(required=False, allow_null=True, validators=[validate_image_upload])
+    general_notes = serializers.CharField(
+        required=False, allow_blank=True, max_length=5000
+    )
+    photo = serializers.ImageField(
+        required=False, allow_null=True, validators=[validate_image_upload]
+    )
 
     class Meta:
         model = Visit
@@ -143,12 +195,42 @@ class VisitWriteSerializer(FlexFieldsModelSerializer):
             "photo",
         )
 
+    def _handle_photo(self, instance, photo_file):
+        from core.image_service import ImageService
+
+        old_path = instance.photo.name if instance.photo else None
+        if old_path:
+            ImageService.delete(old_path)
+        if photo_file is None:
+            instance.photo = None
+        else:
+            instance.photo = ImageService.save(
+                photo_file, _get_owner_id(self.context), "visits/photos"
+            )
+        instance.save(update_fields=["photo"])
+
+    def create(self, validated_data):
+        photo_file = validated_data.pop("photo", None)
+        instance = super().create(validated_data)
+        if photo_file:
+            self._handle_photo(instance, photo_file)
+        return instance
+
+    def update(self, instance, validated_data):
+        photo_file = validated_data.pop("photo", serializers.empty)
+        instance = super().update(instance, validated_data)
+        if photo_file is not serializers.empty:
+            self._handle_photo(instance, photo_file)
+        return instance
+
 
 class PlaceListSerializer(FlexFieldsModelSerializer):
     cover_photo = serializers.SerializerMethodField()
 
     def get_cover_photo(self, obj):
-        return build_public_media_url(obj.cover_photo, self.context.get("request"))
+        return build_public_media_url(
+            obj.cover_photo, self.context.get("request")
+        )
 
     class Meta:
         model = Place
@@ -189,7 +271,9 @@ class PlaceDetailSerializer(FlexFieldsModelSerializer):
     )
 
     def get_cover_photo(self, obj):
-        return build_public_media_url(obj.cover_photo, self.context.get("request"))
+        return build_public_media_url(
+            obj.cover_photo, self.context.get("request")
+        )
 
     class Meta:
         model = Place
@@ -230,8 +314,12 @@ class PlaceDetailSerializer(FlexFieldsModelSerializer):
 
 
 class PlaceWriteSerializer(FlexFieldsModelSerializer):
-    notes = serializers.CharField(required=False, allow_blank=True, max_length=5000)
-    cover_photo = serializers.ImageField(required=False, allow_null=True, validators=[validate_image_upload])
+    notes = serializers.CharField(
+        required=False, allow_blank=True, max_length=5000
+    )
+    cover_photo = serializers.ImageField(
+        required=False, allow_null=True, validators=[validate_image_upload]
+    )
 
     class Meta:
         model = Place
@@ -271,9 +359,36 @@ class PlaceWriteSerializer(FlexFieldsModelSerializer):
             validated_data["longitude"] = lng
         return validated_data
 
+    def _handle_photo(self, instance, photo_file):
+        from core.image_service import ImageService
+
+        old_path = instance.cover_photo.name if instance.cover_photo else None
+        if old_path:
+            ImageService.delete(old_path)
+        if photo_file is None:
+            instance.cover_photo = None
+        else:
+            instance.cover_photo = ImageService.save(
+                photo_file, _get_owner_id(self.context), "places/covers"
+            )
+        instance.save(update_fields=["cover_photo"])
+
     def create(self, validated_data):
+        from core.image_service import ImageService
+
         validated_data["user"] = self.context["request"].user
-        return super().create(self._sync_coords(validated_data))
+        photo_file = validated_data.pop("cover_photo", None)
+        instance = super().create(self._sync_coords(validated_data))
+        if photo_file:
+            instance.cover_photo = ImageService.save(
+                photo_file, instance.user_id, "places/covers"
+            )
+            instance.save(update_fields=["cover_photo"])
+        return instance
 
     def update(self, instance, validated_data):
-        return super().update(instance, self._sync_coords(validated_data))
+        photo_file = validated_data.pop("cover_photo", serializers.empty)
+        instance = super().update(instance, self._sync_coords(validated_data))
+        if photo_file is not serializers.empty:
+            self._handle_photo(instance, photo_file)
+        return instance

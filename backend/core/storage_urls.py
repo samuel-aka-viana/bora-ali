@@ -11,6 +11,16 @@ def build_public_media_url(file_field, request=None) -> str:
         return ""
 
     name = getattr(file_field, "name", "").lstrip("/")
+    if not name:
+        return ""
+
+    # Encrypted per-user files are served through our authenticated view
+    if name.startswith("users/"):
+        if request:
+            return request.build_absolute_uri(f"/api/media/{name}")
+        return f"/api/media/{name}"
+
+    # Legacy paths — S3 presigned URL or local URL fallback
     if _use_s3_signing() and name:
         signed = _build_signed_url(name)
         if signed:
@@ -57,7 +67,9 @@ def _get_s3_presign_client():
         region_name=getattr(settings, "AWS_S3_REGION_NAME", "us-east-1"),
         aws_access_key_id=getattr(settings, "AWS_ACCESS_KEY_ID", None),
         aws_secret_access_key=getattr(settings, "AWS_SECRET_ACCESS_KEY", None),
-        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
+        config=Config(
+            signature_version="s3v4", s3={"addressing_style": "path"}
+        ),
     )
 
 

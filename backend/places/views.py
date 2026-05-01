@@ -5,16 +5,12 @@ from rest_framework.response import Response
 
 from .filters import PlaceFilter, VisitFilter, VisitItemFilter
 from .models import Place, Visit, VisitItem
-from .params_serializers import PlaceVisitParamsSerializer, VisitItemParamsSerializer
-from .serializers import (
-    PlaceDetailSerializer,
-    PlaceListSerializer,
-    PlaceWriteSerializer,
-    VisitItemSerializer,
-    VisitItemWriteSerializer,
-    VisitSerializer,
-    VisitWriteSerializer,
-)
+from .params_serializers import (PlaceVisitParamsSerializer,
+                                 VisitItemParamsSerializer)
+from .serializers import (PlaceDetailSerializer, PlaceListSerializer,
+                          PlaceWriteSerializer, VisitItemSerializer,
+                          VisitItemWriteSerializer, VisitSerializer,
+                          VisitWriteSerializer)
 
 
 class PlaceViewSet(ViewSetBase):
@@ -49,9 +45,15 @@ class PlaceViewSet(ViewSetBase):
     @action(detail=True, methods=["post"], url_path="visits")
     def add_visit(self, request, public_id=None):
         place = self.get_object()
-        validated_data = self.validate_action_params(request)
-        visit = Visit.objects.create(place=place, **validated_data)
-        return Response(VisitSerializer(visit).data, status=status.HTTP_201_CREATED)
+        serializer = self.get_action_serializer_class()(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        visit = serializer.save(place=place)
+        return Response(
+            VisitSerializer(visit).data, status=status.HTTP_201_CREATED
+        )
 
 
 class VisitViewSet(WriteViewSetBase):
@@ -71,9 +73,15 @@ class VisitViewSet(WriteViewSetBase):
     @action(detail=True, methods=["post"], url_path="items")
     def add_item(self, request, public_id=None):
         visit = self.get_object()
-        validated_data = self.validate_action_params(request)
-        item = VisitItem.objects.create(visit=visit, **validated_data)
-        return Response(VisitItemSerializer(item).data, status=status.HTTP_201_CREATED)
+        serializer = self.get_action_serializer_class()(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        item = serializer.save(visit=visit)
+        return Response(
+            VisitItemSerializer(item).data, status=status.HTTP_201_CREATED
+        )
 
 
 class VisitItemViewSet(WriteViewSetBase):
