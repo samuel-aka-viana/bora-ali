@@ -86,3 +86,85 @@ def test_old_profile_photo_deleted_on_update(tmp_path, settings, django_user_mod
     s2.save()
 
     assert not default_storage.exists(old_path)
+
+
+@pytest.mark.django_db
+@override_settings(**_STORAGE_SETTINGS)
+def test_profile_photo_cleared_when_null_sent(tmp_path, settings, django_user_model):
+    """Setting profile_photo=None should clear the field and delete the old file."""
+    settings.MEDIA_ROOT = str(tmp_path)
+    user = baker.make(django_user_model)
+    factory = APIRequestFactory()
+    request = factory.patch("/api/auth/me/")
+    request.user = user
+
+    # First upload a photo
+    s1 = UserSerializer(
+        instance=user,
+        data={"profile_photo": make_jpeg()},
+        partial=True,
+        context={"request": request},
+    )
+    assert s1.is_valid()
+    s1.save()
+
+    from accounts.models import UserProfile
+    from django.core.files.storage import default_storage
+    profile = UserProfile.objects.get(user=user)
+    old_path = profile.profile_photo.name
+    assert default_storage.exists(old_path)
+
+    # Now clear it with None
+    s2 = UserSerializer(
+        instance=user,
+        data={"profile_photo": None},
+        partial=True,
+        context={"request": request},
+    )
+    assert s2.is_valid(), s2.errors
+    s2.save()
+
+    profile.refresh_from_db()
+    assert not profile.profile_photo
+    assert not default_storage.exists(old_path)
+
+
+@pytest.mark.django_db
+@override_settings(**_STORAGE_SETTINGS)
+def test_profile_photo_unchanged_when_omitted(tmp_path, settings, django_user_model):
+    """Partial update omitting profile_photo should leave it unchanged."""
+    settings.MEDIA_ROOT = str(tmp_path)
+    user = baker.make(django_user_model)
+    factory = APIRequestFactory()
+    request = factory.patch("/api/auth/me/")
+    request.user = user
+
+    # First upload a photo
+    s1 = UserSerializer(
+        instance=user,
+        data={"profile_photo": make_jpeg()},
+        partial=True,
+        context={"request": request},
+    )
+    assert s1.is_valid()
+    s1.save()
+
+    from accounts.models import UserProfile
+    from django.core.files.storage import default_storage
+    profile = UserProfile.objects.get(user=user)
+    original_path = profile.profile_photo.name
+    assert default_storage.exists(original_path)
+
+    # Partial update omitting photo (only updating nickname)
+    s2 = UserSerializer(
+        instance=user,
+        data={"nickname": "new-nick"},
+        partial=True,
+        context={"request": request},
+    )
+    assert s2.is_valid(), s2.errors
+    s2.save()
+
+    profile.refresh_from_db()
+    assert profile.profile_photo.name == original_path
+    assert default_storage.exists(original_path)
