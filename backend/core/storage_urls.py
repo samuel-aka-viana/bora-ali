@@ -67,7 +67,9 @@ def _get_s3_presign_client():
         region_name=getattr(settings, "AWS_S3_REGION_NAME", "us-east-1"),
         aws_access_key_id=getattr(settings, "AWS_ACCESS_KEY_ID", None),
         aws_secret_access_key=getattr(settings, "AWS_SECRET_ACCESS_KEY", None),
-        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
+        config=Config(
+            signature_version="s3v4", s3={"addressing_style": "path"}
+        ),
     )
 
 

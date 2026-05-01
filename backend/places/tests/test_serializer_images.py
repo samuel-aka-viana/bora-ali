@@ -1,12 +1,14 @@
 import io
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 from django.test import override_settings
 from model_bakery import baker
 from PIL import Image
+from places.serializers import (PlaceWriteSerializer, VisitItemWriteSerializer,
+                                VisitWriteSerializer)
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
-from places.serializers import VisitItemWriteSerializer, VisitWriteSerializer, PlaceWriteSerializer
 
 
 def make_jpeg():
@@ -20,7 +22,7 @@ def make_jpeg():
 
 
 def make_drf_request(factory_request, user):
-    """Wrap a factory WSGIRequest in a DRF Request so FlexFields can call query_params."""
+    """Wrap factory request so FlexFields can call query_params."""
     drf_req = Request(factory_request)
     drf_req.user = user
     return drf_req
@@ -30,16 +32,21 @@ _STORAGE_SETTINGS = dict(
     SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234",
     STORAGES={
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     },
 )
 
 
-# ──── VisitItem ────────────────────────────────────────────────────────────────
+# VisitItem
+
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_visit_item_photo_saved_under_user_path(tmp_path, settings, django_user_model):
+def test_visit_item_photo_saved_under_user_path(
+    tmp_path, settings, django_user_model
+):
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
     place = baker.make("places.Place", user=user)
@@ -64,7 +71,9 @@ def test_visit_item_photo_saved_under_user_path(tmp_path, settings, django_user_
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_visit_item_old_photo_deleted_on_update(tmp_path, settings, django_user_model):
+def test_visit_item_old_photo_deleted_on_update(
+    tmp_path, settings, django_user_model
+):
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
     place = baker.make("places.Place", user=user)
@@ -86,6 +95,7 @@ def test_visit_item_old_photo_deleted_on_update(tmp_path, settings, django_user_
     old_path = item.photo.name
 
     from django.core.files.storage import default_storage
+
     assert default_storage.exists(old_path)
 
     s2 = VisitItemWriteSerializer(
@@ -99,11 +109,14 @@ def test_visit_item_old_photo_deleted_on_update(tmp_path, settings, django_user_
     assert not default_storage.exists(old_path)
 
 
-# ──── Visit ────────────────────────────────────────────────────────────────────
+# Visit
+
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_visit_photo_saved_under_user_path(tmp_path, settings, django_user_model):
+def test_visit_photo_saved_under_user_path(
+    tmp_path, settings, django_user_model
+):
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
     place = baker.make("places.Place", user=user)
@@ -128,7 +141,9 @@ def test_visit_photo_saved_under_user_path(tmp_path, settings, django_user_model
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_visit_old_photo_deleted_on_update(tmp_path, settings, django_user_model):
+def test_visit_old_photo_deleted_on_update(
+    tmp_path, settings, django_user_model
+):
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
     place = baker.make("places.Place", user=user)
@@ -151,6 +166,7 @@ def test_visit_old_photo_deleted_on_update(tmp_path, settings, django_user_model
     old_path = visit.photo.name
 
     from django.core.files.storage import default_storage
+
     assert default_storage.exists(old_path)
 
     s2 = VisitWriteSerializer(
@@ -164,11 +180,14 @@ def test_visit_old_photo_deleted_on_update(tmp_path, settings, django_user_model
     assert not default_storage.exists(old_path)
 
 
-# ──── Place ────────────────────────────────────────────────────────────────────
+# Place
+
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_place_cover_photo_saved_on_create(tmp_path, settings, django_user_model):
+def test_place_cover_photo_saved_on_create(
+    tmp_path, settings, django_user_model
+):
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
 
@@ -176,7 +195,11 @@ def test_place_cover_photo_saved_on_create(tmp_path, settings, django_user_model
     request = make_drf_request(factory.post("/"), user)
 
     s = PlaceWriteSerializer(
-        data={"name": "Café X", "category": "café", "cover_photo": make_jpeg()},
+        data={
+            "name": "Café X",
+            "category": "café",
+            "cover_photo": make_jpeg(),
+        },
         context={"request": request},
     )
     assert s.is_valid(), s.errors
@@ -187,7 +210,9 @@ def test_place_cover_photo_saved_on_create(tmp_path, settings, django_user_model
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_place_old_cover_photo_deleted_on_update(tmp_path, settings, django_user_model):
+def test_place_old_cover_photo_deleted_on_update(
+    tmp_path, settings, django_user_model
+):
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
     place = baker.make("places.Place", user=user)
@@ -197,7 +222,11 @@ def test_place_old_cover_photo_deleted_on_update(tmp_path, settings, django_user
 
     s1 = PlaceWriteSerializer(
         instance=place,
-        data={"name": place.name, "category": place.category, "cover_photo": make_jpeg()},
+        data={
+            "name": place.name,
+            "category": place.category,
+            "cover_photo": make_jpeg(),
+        },
         partial=True,
         context={"request": request},
     )
@@ -207,11 +236,16 @@ def test_place_old_cover_photo_deleted_on_update(tmp_path, settings, django_user
     old_path = place.cover_photo.name
 
     from django.core.files.storage import default_storage
+
     assert default_storage.exists(old_path)
 
     s2 = PlaceWriteSerializer(
         instance=place,
-        data={"name": place.name, "category": place.category, "cover_photo": make_jpeg()},
+        data={
+            "name": place.name,
+            "category": place.category,
+            "cover_photo": make_jpeg(),
+        },
         partial=True,
         context={"request": request},
     )

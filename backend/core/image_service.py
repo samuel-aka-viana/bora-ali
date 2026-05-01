@@ -65,8 +65,7 @@ class ImageService:
         data = file_obj.read()
         encrypted = ImageService.encrypt(data, user_id)
         path = ImageService.make_path(user_id, category, data)
-        default_storage.save(path, ContentFile(encrypted))
-        return path
+        return default_storage.save(path, ContentFile(encrypted))
 
     @staticmethod
     def delete(path: str) -> None:

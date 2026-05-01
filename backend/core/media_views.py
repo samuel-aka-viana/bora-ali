@@ -1,12 +1,12 @@
 import logging
 
-from django.core.files.storage import default_storage
-from django.http import Http404, HttpResponse
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from rest_framework.permissions import IsAuthenticated
-
 from accounts.authentication import SingleSessionJWTAuthentication
 from core.image_service import ImageService
+from django.core.files.storage import default_storage
+from django.http import Http404, HttpResponse
+from rest_framework.decorators import (api_view, authentication_classes,
+                                       permission_classes)
+from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
 

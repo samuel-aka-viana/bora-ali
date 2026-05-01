@@ -1,9 +1,10 @@
 import io
+
 import pytest
+from core.image_service import ImageService
 from django.test import override_settings
 from model_bakery import baker
 from PIL import Image
-from core.image_service import ImageService
 
 
 def make_jpeg_bytes():
@@ -53,14 +54,18 @@ def other_client(django_user_model):
     SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234",
     STORAGES={
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     },
 )
 def test_serve_own_file_returns_200(auth_client, tmp_path, settings):
     settings.MEDIA_ROOT = str(tmp_path)
     user = auth_client._user
     data = make_jpeg_bytes()
-    path = ImageService.save(io.BytesIO(data), user_id=user.id, category="places/covers")
+    path = ImageService.save(
+        io.BytesIO(data), user_id=user.id, category="places/covers"
+    )
 
     resp = auth_client.get(f"/api/media/{path}")
     assert resp.status_code == 200
@@ -73,14 +78,20 @@ def test_serve_own_file_returns_200(auth_client, tmp_path, settings):
     SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234",
     STORAGES={
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     },
 )
-def test_serve_other_user_file_returns_404(auth_client, other_client, tmp_path, settings):
+def test_serve_other_user_file_returns_404(
+    auth_client, other_client, tmp_path, settings
+):
     settings.MEDIA_ROOT = str(tmp_path)
     other_user = other_client._user
     data = make_jpeg_bytes()
-    path = ImageService.save(io.BytesIO(data), user_id=other_user.id, category="places/covers")
+    path = ImageService.save(
+        io.BytesIO(data), user_id=other_user.id, category="places/covers"
+    )
 
     resp = auth_client.get(f"/api/media/{path}")
     assert resp.status_code == 404
@@ -98,11 +109,15 @@ def test_serve_unauthenticated_returns_401(client, tmp_path, settings):
     SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234",
     STORAGES={
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     },
 )
 def test_serve_nonexistent_file_returns_404(auth_client, tmp_path, settings):
     settings.MEDIA_ROOT = str(tmp_path)
     user = auth_client._user
-    resp = auth_client.get(f"/api/media/users/{user.id}/places/covers/nonexistent_000")
+    resp = auth_client.get(
+        f"/api/media/users/{user.id}/places/covers/nonexistent_000"
+    )
     assert resp.status_code == 404

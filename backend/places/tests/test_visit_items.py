@@ -1,5 +1,11 @@
+import io
+
 import pytest
+from core.image_service import ImageService
+from django.core.files.storage import default_storage
+from django.test import override_settings
 from model_bakery import baker
+from PIL import Image
 
 pytestmark = pytest.mark.django_db
 
@@ -12,26 +18,82 @@ PAYLOAD = {
 }
 
 
+_STORAGE_SETTINGS = dict(
+    SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234",
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
+    },
+)
+
+
+def make_jpeg():
+    buf = io.BytesIO()
+    Image.new("RGB", (10, 10)).save(buf, format="JPEG")
+    buf.seek(0)
+    buf.name = "item.jpg"
+    buf.content_type = "image/jpeg"
+    buf.size = len(buf.getvalue())
+    return buf
+
+
 def test_create_in_own_visit(auth_client, user):
     v = baker.make("places.Visit", place__user=user)
-    r = auth_client.post(f"/api/visits/{v.public_id}/items/", PAYLOAD, format="json")
+    r = auth_client.post(
+        f"/api/visits/{v.public_id}/items/", PAYLOAD, format="json"
+    )
     assert r.status_code == 201
     assert "public_id" in r.data
     assert "id" not in r.data
 
 
+@override_settings(**_STORAGE_SETTINGS)
+def test_create_item_photo_uses_image_service(
+    auth_client, user, tmp_path, settings
+):
+    settings.MEDIA_ROOT = str(tmp_path)
+    visit = baker.make("places.Visit", place__user=user)
+    photo = make_jpeg()
+    raw = photo.getvalue()
+
+    response = auth_client.post(
+        f"/api/visits/{visit.public_id}/items/",
+        {**PAYLOAD, "photo": photo},
+        format="multipart",
+    )
+
+    assert response.status_code == 201
+    item = visit.items.get(public_id=response.data["public_id"])
+    assert item.photo.name.startswith(f"users/{user.id}/visit_items/photos/")
+    with default_storage.open(item.photo.name, "rb") as stored_file:
+        encrypted = stored_file.read()
+    assert encrypted != raw
+    assert ImageService.decrypt(encrypted, user.id) == raw
+
+
 def test_reject_foreign_visit(auth_client, other_user):
     v = baker.make("places.Visit", place__user=other_user)
-    assert auth_client.post(f"/api/visits/{v.public_id}/items/", PAYLOAD, format="json").status_code == 404
+    response = auth_client.post(
+        f"/api/visits/{v.public_id}/items/", PAYLOAD, format="json"
+    )
+    assert response.status_code == 404
 
 
 def test_negative_price_rejected(auth_client, user):
     v = baker.make("places.Visit", place__user=user)
     bad = {**PAYLOAD, "price": "-1.00"}
-    assert auth_client.post(f"/api/visits/{v.public_id}/items/", bad, format="json").status_code == 400
+    response = auth_client.post(
+        f"/api/visits/{v.public_id}/items/", bad, format="json"
+    )
+    assert response.status_code == 400
 
 
 def test_rating_out_of_range(auth_client, user):
     v = baker.make("places.Visit", place__user=user)
     bad = {**PAYLOAD, "rating": 11}
-    assert auth_client.post(f"/api/visits/{v.public_id}/items/", bad, format="json").status_code == 400
+    response = auth_client.post(
+        f"/api/visits/{v.public_id}/items/", bad, format="json"
+    )
+    assert response.status_code == 400

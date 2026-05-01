@@ -1,10 +1,11 @@
 import io
+
 import pytest
+from accounts.serializers import UserSerializer
 from django.test import override_settings
 from model_bakery import baker
 from PIL import Image
 from rest_framework.test import APIRequestFactory
-from accounts.serializers import UserSerializer
 
 
 def make_jpeg():
@@ -21,14 +22,18 @@ _STORAGE_SETTINGS = dict(
     SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234",
     STORAGES={
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     },
 )
 
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_profile_photo_saved_under_user_path(tmp_path, settings, django_user_model):
+def test_profile_photo_saved_under_user_path(
+    tmp_path, settings, django_user_model
+):
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
     factory = APIRequestFactory()
@@ -46,13 +51,16 @@ def test_profile_photo_saved_under_user_path(tmp_path, settings, django_user_mod
     serializer.save()
 
     from accounts.models import UserProfile
+
     profile = UserProfile.objects.get(user=user)
     assert profile.profile_photo.name.startswith(f"users/{user.id}/profiles/")
 
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_old_profile_photo_deleted_on_update(tmp_path, settings, django_user_model):
+def test_old_profile_photo_deleted_on_update(
+    tmp_path, settings, django_user_model
+):
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
     factory = APIRequestFactory()
@@ -71,6 +79,7 @@ def test_old_profile_photo_deleted_on_update(tmp_path, settings, django_user_mod
 
     from accounts.models import UserProfile
     from django.core.files.storage import default_storage
+
     profile = UserProfile.objects.get(user=user)
     old_path = profile.profile_photo.name
     assert default_storage.exists(old_path)
@@ -90,8 +99,10 @@ def test_old_profile_photo_deleted_on_update(tmp_path, settings, django_user_mod
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_profile_photo_cleared_when_null_sent(tmp_path, settings, django_user_model):
-    """Setting profile_photo=None should clear the field and delete the old file."""
+def test_profile_photo_cleared_when_null_sent(
+    tmp_path, settings, django_user_model
+):
+    """profile_photo=None clears the field and deletes the old file."""
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
     factory = APIRequestFactory()
@@ -110,6 +121,7 @@ def test_profile_photo_cleared_when_null_sent(tmp_path, settings, django_user_mo
 
     from accounts.models import UserProfile
     from django.core.files.storage import default_storage
+
     profile = UserProfile.objects.get(user=user)
     old_path = profile.profile_photo.name
     assert default_storage.exists(old_path)
@@ -131,7 +143,9 @@ def test_profile_photo_cleared_when_null_sent(tmp_path, settings, django_user_mo
 
 @pytest.mark.django_db
 @override_settings(**_STORAGE_SETTINGS)
-def test_profile_photo_unchanged_when_omitted(tmp_path, settings, django_user_model):
+def test_profile_photo_unchanged_when_omitted(
+    tmp_path, settings, django_user_model
+):
     """Partial update omitting profile_photo should leave it unchanged."""
     settings.MEDIA_ROOT = str(tmp_path)
     user = baker.make(django_user_model)
@@ -151,6 +165,7 @@ def test_profile_photo_unchanged_when_omitted(tmp_path, settings, django_user_mo
 
     from accounts.models import UserProfile
     from django.core.files.storage import default_storage
+
     profile = UserProfile.objects.get(user=user)
     original_path = profile.profile_photo.name
     assert default_storage.exists(original_path)

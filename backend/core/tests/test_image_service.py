@@ -1,13 +1,14 @@
 import io
+
 import pytest
-from django.core.files.base import ContentFile
-from django.test import override_settings
 from core.image_service import ImageService
+from django.test import override_settings
 
 
 @pytest.fixture
 def fake_image_bytes():
     from PIL import Image
+
     buf = io.BytesIO()
     Image.new("RGB", (10, 10), color=(255, 0, 0)).save(buf, format="JPEG")
     buf.seek(0)
@@ -32,7 +33,9 @@ def test_different_content_different_path():
 
 
 @pytest.mark.django_db
-@override_settings(SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234")
+@override_settings(
+    SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234"
+)
 def test_encrypt_decrypt_roundtrip():
     data = b"hello image bytes"
     encrypted = ImageService.encrypt(data, user_id=7)
@@ -42,11 +45,14 @@ def test_encrypt_decrypt_roundtrip():
 
 
 @pytest.mark.django_db
-@override_settings(SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234")
+@override_settings(
+    SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234"
+)
 def test_different_users_cannot_cross_decrypt():
     data = b"secret image"
     encrypted = ImageService.encrypt(data, user_id=1)
     from cryptography.fernet import InvalidToken
+
     with pytest.raises(InvalidToken):
         ImageService.decrypt(encrypted, user_id=2)
 
@@ -56,7 +62,9 @@ def test_different_users_cannot_cross_decrypt():
     SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234",
     STORAGES={
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     },
 )
 def test_save_returns_valid_path(tmp_path, settings, fake_image_bytes):
@@ -72,7 +80,9 @@ def test_save_returns_valid_path(tmp_path, settings, fake_image_bytes):
     SECRET_KEY="test-secret-key-long-enough-for-hkdf-derivation-1234",
     STORAGES={
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     },
 )
 def test_delete_removes_file(tmp_path, settings, fake_image_bytes):
@@ -81,6 +91,7 @@ def test_delete_removes_file(tmp_path, settings, fake_image_bytes):
     f.name = "photo.jpg"
     path = ImageService.save(f, user_id=5, category="places/covers")
     from django.core.files.storage import default_storage
+
     assert default_storage.exists(path)
     ImageService.delete(path)
     assert not default_storage.exists(path)
