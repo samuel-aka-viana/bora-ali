@@ -1,3 +1,4 @@
+from config.admin_site import site as admin_site
 from core.media_views import serve_user_media
 from django.conf import settings
 from django.contrib import admin
@@ -6,7 +7,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.permissions import IsAuthenticated
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin/", admin_site.urls),
     path("api/auth/", include("accounts.urls")),
     path("api/", include("places.urls")),
     path("api/media/<path:path>", serve_user_media, name="serve-user-media"),

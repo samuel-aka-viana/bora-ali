@@ -10,7 +10,7 @@ export interface Visit {
   would_return: boolean;
   general_notes?: string;
   photo?: string;
-  items: VisitItem[];
+  items?: VisitItem[];
   created_at: string;
   updated_at: string;
 }

@@ -14,7 +14,7 @@ export default function NewPlacePage() {
       <PlaceForm
         onSubmit={async (d) => {
           const p = await placesService.create(d);
-          nav(`/places/${p.public_id}`);
+          nav(`/places/${p.public_id}`, { replace: true });
         }}
       />
     </div>

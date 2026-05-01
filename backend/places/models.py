@@ -9,7 +9,10 @@ from .managers import PlaceQuerySet, VisitItemQuerySet, VisitQuerySet
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name="created at", db_column="created_at"
+        auto_now_add=True,
+        verbose_name="created at",
+        db_column="created_at",
+        db_index=True,
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name="updated at", db_column="updated_at"
@@ -88,6 +91,12 @@ class Place(PublicIdModel, TimeStampedModel):
         ordering = ("-created_at",)
         verbose_name = "place"
         verbose_name_plural = "places"
+        indexes = [
+            models.Index(fields=["user", "status"], name="place_user_status_idx"),
+            models.Index(
+                fields=["user", "category"], name="place_user_category_idx"
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -103,7 +112,9 @@ class Visit(PublicIdModel, TimeStampedModel):
         verbose_name="place",
         db_column="place_id",
     )
-    visited_at = models.DateTimeField(verbose_name="visited at", db_column="visited_at")
+    visited_at = models.DateTimeField(
+        verbose_name="visited at", db_column="visited_at", db_index=True
+    )
     environment_rating = models.DecimalField(
         max_digits=4,
         decimal_places=2,
@@ -153,6 +164,14 @@ class Visit(PublicIdModel, TimeStampedModel):
         ordering = ("-visited_at",)
         verbose_name = "visit"
         verbose_name_plural = "visits"
+        indexes = [
+            models.Index(
+                fields=["place", "visited_at"], name="visit_place_visited_idx"
+            ),
+            models.Index(
+                fields=["place", "overall_rating"], name="visit_place_rating_idx"
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.place.name} @ {self.visited_at:%Y-%m-%d}"
@@ -214,6 +233,14 @@ class VisitItem(PublicIdModel, TimeStampedModel):
         ordering = ("-created_at",)
         verbose_name = "visit item"
         verbose_name_plural = "visit items"
+        indexes = [
+            models.Index(
+                fields=["visit", "type"], name="visititem_visit_type_idx"
+            ),
+            models.Index(
+                fields=["visit", "rating"], name="visititem_visit_rating_idx"
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.name

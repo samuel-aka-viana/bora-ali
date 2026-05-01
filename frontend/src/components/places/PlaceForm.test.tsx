@@ -6,7 +6,7 @@ test("requires name before submitting", async () => {
   const onSubmit = vi.fn();
   render(<PlaceForm onSubmit={onSubmit} />);
 
-  fireEvent.click(screen.getByText("Save"));
+  fireEvent.submit(screen.getByRole("button", { name: "Save" }).closest("form")!);
 
   await waitFor(() => {
     expect(screen.getByText(/name is required/i)).toBeInTheDocument();

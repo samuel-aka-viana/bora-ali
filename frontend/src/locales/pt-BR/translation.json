@@ -103,6 +103,7 @@
     "geolocationError": "Não foi possível obter a localização atual.",
     "zoomIn": "Aproximar mapa",
     "zoomOut": "Afastar mapa",
+    "geocoding": "Buscando endereço...",
     "status": "Status",
     "notes": "Notas",
     "coverPhoto": "Foto de capa",
@@ -135,7 +136,8 @@
     "save": "Salvar visita",
     "saveError": "Falha ao salvar visita",
     "newTitle": "Nova visita",
-    "editTitle": "Editar visita"
+    "editTitle": "Editar visita",
+    "loadError": "Falha ao carregar a visita"
   },
   "status": {
     "want_to_visit": "Quero visitar",
@@ -172,7 +174,11 @@
     "overall": "Geral",
     "environment": "Amb",
     "service": "Atendimento",
-    "noPhoto": "Sem foto"
+    "noPhoto": "Sem foto",
+    "details": "Ver consumíveis",
+    "hideDetails": "Ocultar consumíveis",
+    "empty": "Nenhum consumível registrado.",
+    "loadError": "Falha ao carregar os consumíveis"
   },
   "dateTimePicker": {
     "timeCaption": "Horário",

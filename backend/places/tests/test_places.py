@@ -123,7 +123,38 @@ def test_detail_avoids_n_plus_one_queries(auth_client, user):
         r = auth_client.get(f"/api/places/{place.public_id}/")
 
     assert r.status_code == 200
-    assert len(queries) == 3
+    assert len(queries) == 2
+    assert "items" not in r.data["visits"][0]
+
+
+def test_detail_can_expand_visit_items(auth_client, user):
+    place = baker.make("places.Place", user=user)
+    visit = baker.make("places.Visit", place=place)
+    baker.make("places.VisitItem", visit=visit)
+
+    r = auth_client.get(f"/api/places/{place.public_id}/?expand=visits.items")
+
+    assert r.status_code == 200
+    assert "items" in r.data["visits"][0]
+    assert len(r.data["visits"][0]["items"]) == 1
+
+
+def test_detail_payload_is_smaller_than_expanded_payload(auth_client, user):
+    place = baker.make("places.Place", user=user)
+    visits = baker.make("places.Visit", place=place, _quantity=2)
+    for visit in visits:
+        baker.make("places.VisitItem", visit=visit, _quantity=3)
+
+    summarized = auth_client.get(f"/api/places/{place.public_id}/")
+    expanded = auth_client.get(
+        f"/api/places/{place.public_id}/?expand=visits.items"
+    )
+
+    assert summarized.status_code == 200
+    assert expanded.status_code == 200
+    assert "items" not in summarized.data["visits"][0]
+    assert "items" in expanded.data["visits"][0]
+    assert len(summarized.content) < len(expanded.content)
 
 
 def test_list_can_expand_visits(auth_client, user):

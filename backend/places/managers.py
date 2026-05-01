@@ -47,13 +47,17 @@ class PlaceQuerySet(models.QuerySet):
 
         return self
 
-    def with_detail_payload(self):
+    def with_detail_payload(self, expands: str | Iterable[str] | None = None):
+        expand_set = parse_expands(expands)
         from .models import Visit, VisitItem
 
-        visit_items_queryset = VisitItem.objects.order_by("-created_at")
-        visits_queryset = Visit.objects.order_by("-visited_at").prefetch_related(
-            Prefetch("items", queryset=visit_items_queryset)
-        )
+        visits_queryset = Visit.objects.order_by("-visited_at")
+
+        if "visits.items" in expand_set:
+            visit_items_queryset = VisitItem.objects.order_by("-created_at")
+            visits_queryset = visits_queryset.prefetch_related(
+                Prefetch("items", queryset=visit_items_queryset)
+            )
 
         return self.prefetch_related(Prefetch("visits", queryset=visits_queryset))
 
@@ -80,10 +84,33 @@ class VisitQuerySet(models.QuerySet):
     def with_expansion(self, expands: str | Iterable[str] | None = None):
         expand_set = parse_expands(expands)
 
+        queryset = self
         if "place" in expand_set:
-            return self.select_related("place")
+            queryset = queryset.select_related("place")
 
-        return self
+        if "items" in expand_set:
+            from .models import VisitItem
+
+            item_queryset = VisitItem.objects.order_by("-created_at")
+            queryset = queryset.prefetch_related(
+                Prefetch("items", queryset=item_queryset)
+            )
+
+        return queryset
+
+    def with_detail_payload(self, expands: str | Iterable[str] | None = None):
+        expand_set = parse_expands(expands)
+        queryset = self.with_expansion(expands)
+
+        if "items" not in expand_set:
+            from .models import VisitItem
+
+            item_queryset = VisitItem.objects.order_by("-created_at")
+            queryset = queryset.prefetch_related(
+                Prefetch("items", queryset=item_queryset)
+            )
+
+        return queryset
 
     def as_values(self):
         return self.values(

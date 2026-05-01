@@ -1,5 +1,7 @@
 from .settings import *  # noqa: F403
 
+USE_VERSITYGW = False
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",

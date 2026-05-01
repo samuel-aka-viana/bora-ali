@@ -18,7 +18,7 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret")
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
-USE_VERSITYGW = os.getenv("USE_VERSITYGW", "False") == "True"
+USE_VERSITYGW = os.getenv("USE_VERSITYGW", "True") == "True"
 
 # Impede deploy acidental com SECRET_KEY padrão ou fraca.
 # 50 chars é o mínimo recomendado para HS256 com segurança adequada.
@@ -76,7 +76,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

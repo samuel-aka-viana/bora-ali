@@ -11,6 +11,7 @@ import { LocationPicker } from "../ui/LocationPicker";
 import { AuthImage } from "../ui/AuthImage";
 import { getApiErrorState } from "../../services/api-errors";
 import { validateImageFile, ALLOWED_IMAGE_ACCEPT } from "../../utils/url";
+import { geocodeAddress } from "../../services/geocoding.service";
 
 type PlacePayload = Partial<Omit<Place, "cover_photo">> & { cover_photo?: string | File };
 
@@ -26,10 +27,27 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
   const [preview, setPreview] = useState<string | null>(initial.cover_photo ?? null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
+  const [geocoding, setGeocoding] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const geocodeAbortRef = useRef<AbortController | null>(null);
+  const lastGeocodedAddressRef = useRef<string>("");
 
   const upd = (k: keyof Place) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setF({ ...f, [k]: e.target.value });
+
+  async function handleAddressBlur() {
+    const address = f.address?.trim() ?? "";
+    if (address.length < 5 || address === lastGeocodedAddressRef.current) return;
+    geocodeAbortRef.current?.abort();
+    const controller = new AbortController();
+    geocodeAbortRef.current = controller;
+    setGeocoding(true);
+    const coords = await geocodeAddress(address, controller.signal);
+    setGeocoding(false);
+    if (!coords) return;
+    lastGeocodedAddressRef.current = address;
+    setF((prev) => ({ ...prev, latitude: String(coords.lat), longitude: String(coords.lon) }));
+  }
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -74,9 +92,15 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
       }}
       className="space-y-3"
     >
-      <Input label={t("placeForm.name")} value={f.name || ""} onChange={upd("name")} error={fieldErrors.name} />
+      <Input label={t("placeForm.name")} value={f.name || ""} onChange={upd("name")} error={fieldErrors.name} required />
       <Input label={t("placeForm.category")} value={f.category || ""} onChange={upd("category")} error={fieldErrors.category} />
-      <Input label={t("placeForm.address")} value={f.address || ""} onChange={upd("address")} error={fieldErrors.address} />
+      <Input
+        label={t("placeForm.address")}
+        value={f.address || ""}
+        onChange={upd("address")}
+        onBlur={handleAddressBlur}
+        error={geocoding ? t("placeForm.geocoding") : fieldErrors.address}
+      />
       <Input label={t("placeForm.instagram")} value={f.instagram_url || ""} onChange={upd("instagram_url")} error={fieldErrors.instagram_url} />
       <Input label={t("placeForm.maps")} value={f.maps_url || ""} onChange={upd("maps_url")} error={fieldErrors.maps_url} />
       <LocationPicker

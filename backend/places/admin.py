@@ -1,3 +1,4 @@
+from config.admin_site import site as admin_site
 from django.contrib import admin
 from django.utils.html import format_html
 
@@ -10,7 +11,7 @@ def image_preview(image_field):
     return "—"
 
 
-@admin.register(Place)
+@admin.register(Place, site=admin_site)
 class PlaceAdmin(admin.ModelAdmin):
     list_display = ("name", "category", "status", "user", "cover_preview", "created_at")
     list_filter = ("status", "category")
@@ -42,7 +43,7 @@ class VisitItemInline(admin.TabularInline):
         return image_preview(obj.photo)
 
 
-@admin.register(Visit)
+@admin.register(Visit, site=admin_site)
 class VisitAdmin(admin.ModelAdmin):
     list_display = ("place", "visited_at", "overall_rating", "would_return", "photo_preview")
     list_filter = ("would_return",)
@@ -67,7 +68,7 @@ class VisitAdmin(admin.ModelAdmin):
             Visit.objects.filter(pk=obj.pk).update(photo_path=obj.photo_path)
 
 
-@admin.register(VisitItem)
+@admin.register(VisitItem, site=admin_site)
 class VisitItemAdmin(admin.ModelAdmin):
     list_display = ("name", "visit", "type", "rating", "price", "photo_preview")
     list_filter = ("type", "would_order_again")

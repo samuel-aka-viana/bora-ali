@@ -99,9 +99,8 @@ class VisitItemWriteSerializer(FlexFieldsModelSerializer):
         return instance
 
 
-class VisitSerializer(FlexFieldsModelSerializer):
+class VisitSummarySerializer(FlexFieldsModelSerializer):
     photo = serializers.SerializerMethodField()
-    items = VisitItemSerializer(many=True, read_only=True)
 
     def get_photo(self, obj):
         return build_public_media_url(obj.photo, self.context.get("request"))
@@ -118,61 +117,35 @@ class VisitSerializer(FlexFieldsModelSerializer):
             "would_return",
             "general_notes",
             "photo",
-            "items",
             "created_at",
             "updated_at",
         )
         read_only_fields = (
             "public_id",
             "place",
+            "created_at",
+            "updated_at",
+        )
+        expandable_fields = {
+            "place": (
+                "places.serializers.PlaceListSerializer",
+                {"read_only": True},
+            ),
+            "items": (
+                "places.serializers.VisitItemSerializer",
+                {"many": True, "read_only": True},
+            ),
+        }
+
+
+class VisitDetailSerializer(VisitSummarySerializer):
+    items = VisitItemSerializer(many=True, read_only=True)
+
+    class Meta(VisitSummarySerializer.Meta):
+        fields = VisitSummarySerializer.Meta.fields + ("items",)
+        read_only_fields = VisitSummarySerializer.Meta.read_only_fields + (
             "items",
-            "created_at",
-            "updated_at",
         )
-        expandable_fields = {
-            "place": (
-                "places.serializers.PlaceListSerializer",
-                {"read_only": True},
-            ),
-            "items": (
-                "places.serializers.VisitItemSerializer",
-                {"many": True, "read_only": True},
-            ),
-        }
-
-
-class VisitExpandSerializer(FlexFieldsModelSerializer):
-    photo = serializers.SerializerMethodField()
-
-    def get_photo(self, obj):
-        return build_public_media_url(obj.photo, self.context.get("request"))
-
-    class Meta:
-        model = Visit
-        fields = (
-            "public_id",
-            "place",
-            "visited_at",
-            "environment_rating",
-            "service_rating",
-            "overall_rating",
-            "would_return",
-            "general_notes",
-            "photo",
-            "created_at",
-            "updated_at",
-        )
-        read_only_fields = fields
-        expandable_fields = {
-            "place": (
-                "places.serializers.PlaceListSerializer",
-                {"read_only": True},
-            ),
-            "items": (
-                "places.serializers.VisitItemSerializer",
-                {"many": True, "read_only": True},
-            ),
-        }
 
 
 class VisitWriteSerializer(FlexFieldsModelSerializer):
@@ -186,6 +159,7 @@ class VisitWriteSerializer(FlexFieldsModelSerializer):
     class Meta:
         model = Visit
         fields = (
+            "public_id",
             "visited_at",
             "environment_rating",
             "service_rating",
@@ -194,6 +168,7 @@ class VisitWriteSerializer(FlexFieldsModelSerializer):
             "general_notes",
             "photo",
         )
+        read_only_fields = ("public_id",)
 
     def _handle_photo(self, instance, photo_file):
         from core.image_service import ImageService
@@ -247,7 +222,7 @@ class PlaceListSerializer(FlexFieldsModelSerializer):
         read_only_fields = ("public_id", "created_at", "updated_at")
         expandable_fields = {
             "visits": (
-                "places.serializers.VisitExpandSerializer",
+                "places.serializers.VisitSummarySerializer",
                 {"many": True, "read_only": True},
             ),
         }
@@ -255,7 +230,7 @@ class PlaceListSerializer(FlexFieldsModelSerializer):
 
 class PlaceDetailSerializer(FlexFieldsModelSerializer):
     cover_photo = serializers.SerializerMethodField()
-    visits = VisitSerializer(many=True, read_only=True)
+    visits = VisitSummarySerializer(many=True, read_only=True)
     consumables_count = serializers.IntegerField(read_only=True)
     average_consumable_rating = serializers.DecimalField(
         max_digits=10,
@@ -307,7 +282,7 @@ class PlaceDetailSerializer(FlexFieldsModelSerializer):
         )
         expandable_fields = {
             "visits": (
-                "places.serializers.VisitSerializer",
+                "places.serializers.VisitSummarySerializer",
                 {"many": True, "read_only": True},
             ),
         }

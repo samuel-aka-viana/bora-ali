@@ -13,6 +13,9 @@ export const visitsService = {
   create: (placePublicId: string, data: VisitPayload) =>
     api.post<Visit>(`/places/${placePublicId}/visits/`, toPayload(data)).then((r) => r.data),
 
+  get: (publicId: string) =>
+    api.get<Visit>(`/visits/${publicId}/`).then((r) => r.data),
+
   update: (publicId: string, data: VisitPayload) =>
     api.patch<Visit>(`/visits/${publicId}/`, toPayload(data)).then((r) => r.data),
 

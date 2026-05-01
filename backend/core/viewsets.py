@@ -65,7 +65,7 @@ class ViewSetBase(ActionParamsMixin, viewsets.ModelViewSet):
             raise exceptions.ForeignKeyException from error
 
 
-class WriteViewSetBase(ActionParamsMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class WriteViewSetBase(ActionParamsMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     def update(self, request, *args, **kwargs):
         with transaction.atomic():
             lookup = kwargs.get(self.lookup_field, kwargs.get("pk"))

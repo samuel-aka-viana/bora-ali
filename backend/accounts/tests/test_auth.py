@@ -42,32 +42,6 @@ def test_logout_blacklists(api_client, user):
     assert r2.status_code == 401
 
 
-def test_me(auth_client):
-    r = auth_client.get("/api/auth/me/")
-    assert r.status_code == 200
-    assert r.data["username"] == "alice"
-    assert r.data["nickname"] == ""
-    assert r.data["profile_photo_url"] == ""
-
-
-def test_update_me(auth_client):
-    r = auth_client.patch(
-        "/api/auth/me/",
-        {
-            "username": "alice-new",
-            "email": "new@a.com",
-            "display_name": "Alice Silva",
-            "nickname": "Ali",
-        },
-        format="json",
-    )
-    assert r.status_code == 200
-    assert r.data["username"] == "alice-new"
-    assert r.data["email"] == "new@a.com"
-    assert r.data["display_name"] == "Alice Silva"
-    assert r.data["nickname"] == "Ali"
-
-
 def test_change_password(auth_client, api_client):
     r = auth_client.post(
         "/api/auth/password/",

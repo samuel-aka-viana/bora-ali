@@ -11,6 +11,7 @@ import { ErrorMessage } from "../ui/ErrorMessage";
 import { Modal } from "../ui/Modal";
 import { AuthImage } from "../ui/AuthImage";
 import { getApiErrorState } from "../../services/api-errors";
+import { visitItemsService } from "../../services/visit-items.service";
 import { validateImageFile, ALLOWED_IMAGE_ACCEPT } from "../../utils/url";
 
 type VisitPayload = Partial<Omit<Visit, "photo">> & { photo?: string | File };
@@ -110,8 +111,21 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
     setModalOpen(false);
   }
 
-  function removeItem(i: number) {
-    setItems(items.filter((_, j) => j !== i));
+  async function removeItem(i: number) {
+    const item = items[i];
+    if (!item) return;
+
+    if (item.public_id) {
+      try {
+        await visitItemsService.remove(item.public_id);
+      } catch (error) {
+        const apiError = getApiErrorState(error, t("visitForm.saveError"));
+        setSubmitError(apiError.message);
+        return;
+      }
+    }
+
+    setItems((prev) => prev.filter((_, j) => j !== i));
   }
 
   return (
@@ -275,7 +289,9 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
                     </button>
                     <button
                       type="button"
-                      onClick={() => removeItem(i)}
+                      onClick={() => {
+                        void removeItem(i);
+                      }}
                       className="flex h-6 w-6 items-center justify-center rounded-md bg-surface/90 text-muted shadow-sm transition hover:text-red-500"
                       aria-label="Remover"
                     >

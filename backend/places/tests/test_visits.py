@@ -50,6 +50,18 @@ def test_create_visit_in_own_place(auth_client, user):
     assert "id" not in r.data
 
 
+def test_retrieve_visit_includes_items(auth_client, user):
+    place = baker.make("places.Place", user=user)
+    visit = baker.make("places.Visit", place=place)
+    baker.make("places.VisitItem", visit=visit)
+
+    response = auth_client.get(f"/api/visits/{visit.public_id}/")
+
+    assert response.status_code == 200
+    assert "items" in response.data
+    assert len(response.data["items"]) == 1
+
+
 @override_settings(**_STORAGE_SETTINGS)
 def test_create_visit_photo_uses_image_service(
     auth_client, user, tmp_path, settings

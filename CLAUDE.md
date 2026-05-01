@@ -41,7 +41,7 @@ Services: `localhost` (frontend), `localhost/api/` (API), `:8081` (VersityGW), `
 
 **Maps embed**: `latitude`/`longitude` auto-extracted from `maps_url` via regex in `PlaceWriteSerializer._sync_coords()`. Frontend shows Google Maps iframe modal — no API key needed.
 
-**File storage**: `USE_VERSITYGW=False` → local filesystem. `True` → django-storages S3Boto3 → VersityGW.
+**File storage**: default `USE_VERSITYGW=True` → django-storages S3Boto3 → VersityGW. Set `False` only when you explicitly want local filesystem.
 
 **i18n backend**: GNU gettext + `LocaleMiddleware`. **i18n frontend**: react-i18next, JSON files at `frontend/src/locales/<lang>/translation.json`, lang in `localStorage.boraali_lang`.
 

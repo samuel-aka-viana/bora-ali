@@ -103,6 +103,7 @@
     "geolocationError": "Could not get your current location.",
     "zoomIn": "Zoom map in",
     "zoomOut": "Zoom map out",
+    "geocoding": "Looking up address...",
     "status": "Status",
     "notes": "Notes",
     "coverPhoto": "Cover photo",
@@ -135,7 +136,8 @@
     "save": "Save visit",
     "saveError": "Failed to save visit",
     "newTitle": "New visit",
-    "editTitle": "Edit visit"
+    "editTitle": "Edit visit",
+    "loadError": "Failed to load the visit"
   },
   "status": {
     "want_to_visit": "Want to visit",
@@ -172,7 +174,11 @@
     "overall": "Overall",
     "environment": "Env",
     "service": "Service",
-    "noPhoto": "No photo"
+    "noPhoto": "No photo",
+    "details": "View consumables",
+    "hideDetails": "Hide consumables",
+    "empty": "No consumables recorded.",
+    "loadError": "Failed to load consumables"
   },
   "dateTimePicker": {
     "timeCaption": "Time",
