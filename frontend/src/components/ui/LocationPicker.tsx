@@ -106,7 +106,8 @@ export function LocationPicker({
 
   useEffect(() => {
     if (!selected) return;
-    setCenter(selected);
+    const timeout = window.setTimeout(() => setCenter(selected), 0);
+    return () => window.clearTimeout(timeout);
   }, [selected]);
 
   useEffect(() => {

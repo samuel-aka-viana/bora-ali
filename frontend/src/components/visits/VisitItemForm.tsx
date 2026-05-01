@@ -7,6 +7,7 @@ import { Select } from "../ui/Select";
 import { RatingInput } from "../ui/RatingInput";
 import { Textarea } from "../ui/Textarea";
 import { validateImageFile, ALLOWED_IMAGE_ACCEPT } from "../../utils/url";
+import { AuthenticatedImage } from "../ui/AuthenticatedImage";
 
 type VisitItemPayload = Partial<Omit<VisitItem, "photo">> & { photo?: string | File };
 
@@ -102,7 +103,7 @@ export function VisitItemForm({ value, onChange }: Props) {
         >
           {preview ? (
             <>
-              <img
+              <AuthenticatedImage
                 src={preview}
                 alt={t("visitItemForm.itemPhotoAlt")}
                 className="h-full w-full object-cover"

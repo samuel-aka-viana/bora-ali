@@ -9,6 +9,7 @@ import { Button } from "../ui/Button";
 import { VisitItemForm } from "./VisitItemForm";
 import { ErrorMessage } from "../ui/ErrorMessage";
 import { Modal } from "../ui/Modal";
+import { AuthenticatedImage } from "../ui/AuthenticatedImage";
 import { getApiErrorState } from "../../services/api-errors";
 import { validateImageFile, ALLOWED_IMAGE_ACCEPT } from "../../utils/url";
 
@@ -180,7 +181,7 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
           >
             {preview ? (
               <>
-                <img
+                <AuthenticatedImage
                   src={preview}
                   alt={t("visitForm.visitPhotoAlt")}
                   className="h-full w-full object-cover"
@@ -236,7 +237,7 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
                   className="group relative flex flex-col gap-1.5 rounded-xl border border-border bg-background p-3 transition hover:border-primary/40 hover:shadow-sm"
                 >
                   {it.photo && typeof it.photo === "string" ? (
-                    <img
+                    <AuthenticatedImage
                       src={it.photo}
                       alt=""
                       className="h-20 w-full rounded-lg object-cover"

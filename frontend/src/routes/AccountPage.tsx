@@ -9,6 +9,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { ErrorMessage } from "../components/ui/ErrorMessage";
 import { Input } from "../components/ui/Input";
+import { AuthenticatedImage } from "../components/ui/AuthenticatedImage";
 
 export default function AccountPage() {
   const { t } = useTranslation();
@@ -89,7 +90,7 @@ export default function AccountPage() {
         >
           <div className="flex items-center gap-4">
             {photoPreview ? (
-              <img
+              <AuthenticatedImage
                 src={photoPreview}
                 alt={t("account.photoAlt")}
                 className="h-20 w-20 rounded-2xl object-cover"

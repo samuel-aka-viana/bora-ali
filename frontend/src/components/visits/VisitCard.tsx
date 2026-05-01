@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { fmtDate, fmtRating, fmtPrice } from "../../utils/formatters";
+import { AuthenticatedImage } from "../ui/AuthenticatedImage";
 
 type Props = {
   visit: Visit;
@@ -42,7 +43,11 @@ export function VisitCard({ visit, onEdit, onDelete }: Props) {
           {visit.items.map((it) => (
             <div key={it.public_id} className="bg-surface rounded-xl border border-border overflow-hidden text-sm">
               {it.photo ? (
-                <img src={it.photo} alt={it.name} className="w-full h-24 object-cover" />
+                <AuthenticatedImage
+                  src={it.photo}
+                  alt={it.name}
+                  className="w-full h-24 object-cover"
+                />
               ) : (
                 <div className="w-full h-24 bg-muted/10 flex items-center justify-center text-muted text-xs">
                   {t("visitCard.noPhoto")}
