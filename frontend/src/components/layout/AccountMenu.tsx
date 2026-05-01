@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/useAuth";
-import { AuthenticatedImage } from "../ui/AuthenticatedImage";
+import { AuthImage } from "../ui/AuthImage";
 import { LanguageToggle } from "../ui/LanguageToggle";
 
 function initials(name: string) {
@@ -43,7 +43,7 @@ export function AccountMenu() {
         aria-expanded={open}
       >
         {user?.profile_photo_url ? (
-          <AuthenticatedImage
+          <AuthImage
             src={user.profile_photo_url}
             alt={t("account.photoAlt")}
             className="h-8 w-8 rounded-lg object-cover"
@@ -59,7 +59,7 @@ export function AccountMenu() {
         <div className="mt-2 w-72 rounded-2xl border border-border bg-surface p-3 shadow-lg">
           <div className="flex items-center gap-3 border-b border-border pb-3">
             {user?.profile_photo_url ? (
-              <AuthenticatedImage
+              <AuthImage
                 src={user.profile_photo_url}
                 alt={t("account.photoAlt")}
                 className="h-11 w-11 rounded-xl object-cover"

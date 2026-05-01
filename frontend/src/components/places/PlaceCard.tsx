@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { Place } from "../../types/place";
 import { Badge } from "../ui/Badge";
 import { sanitizeUrl } from "../../utils/url";
-import { AuthenticatedImage } from "../ui/AuthenticatedImage";
+import { AuthImage } from "../ui/AuthImage";
 
 export function PlaceCard({ place, index = 0 }: { place: Place; index?: number }) {
   const { t } = useTranslation();
@@ -17,7 +17,7 @@ export function PlaceCard({ place, index = 0 }: { place: Place; index?: number }
         <div className="relative overflow-hidden">
           {place.cover_photo ? (
             <>
-              <AuthenticatedImage
+              <AuthImage
                 src={place.cover_photo}
                 alt={place.name}
                 className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500"

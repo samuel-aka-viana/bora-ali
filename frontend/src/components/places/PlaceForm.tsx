@@ -8,7 +8,7 @@ import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
 import { ErrorMessage } from "../ui/ErrorMessage";
 import { LocationPicker } from "../ui/LocationPicker";
-import { AuthenticatedImage } from "../ui/AuthenticatedImage";
+import { AuthImage } from "../ui/AuthImage";
 import { getApiErrorState } from "../../services/api-errors";
 import { validateImageFile, ALLOWED_IMAGE_ACCEPT } from "../../utils/url";
 
@@ -116,7 +116,7 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
         >
           {preview ? (
             <>
-              <AuthenticatedImage
+              <AuthImage
                 src={preview}
                 alt={t("placeForm.coverPreviewAlt")}
                 className="h-full w-full object-cover"
