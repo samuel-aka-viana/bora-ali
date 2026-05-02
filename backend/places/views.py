@@ -1,3 +1,133 @@
-from django.shortcuts import render
+from core.viewsets import ViewSetBase, WriteViewSetBase
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-# Create your views here.
+from .serializers import _extract_coords
+
+
+
+from .filters import PlaceFilter, VisitFilter, VisitItemFilter
+from .models import Place, Visit, VisitItem
+from .params_serializers import (PlaceVisitParamsSerializer,
+                                 VisitItemParamsSerializer)
+from .serializers import (PlaceDetailSerializer, PlaceListSerializer,
+                          PlaceWriteSerializer, VisitDetailSerializer,
+                          VisitItemSerializer, VisitItemWriteSerializer,
+                          VisitSummarySerializer, VisitWriteSerializer)
+
+
+class PlaceViewSet(ViewSetBase):
+    queryset = Place.objects.all()
+    lookup_field = "public_id"
+    filterset_class = PlaceFilter
+    search_fields = ("name", "category", "address")
+    ordering_fields = ("created_at", "updated_at", "name")
+    serializer_class = PlaceListSerializer
+    serializer_action_classes = {
+        "create": PlaceWriteSerializer,
+        "update": PlaceWriteSerializer,
+        "partial_update": PlaceWriteSerializer,
+        "retrieve": PlaceDetailSerializer,
+    }
+    action_param_serializers = {
+        "visits": PlaceVisitParamsSerializer,
+    }
+
+    @action(detail=False, methods=["post"], url_path="resolve-maps-url")
+    def resolve_maps_url(self, request):
+        url = request.data.get("url", "")
+        if not url:
+            return Response({"error": "url é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+        lat, lng = _extract_coords(url)
+        if lat is None:
+            return Response({"error": "Coordenadas não encontradas"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return Response({"latitude": str(lat), "longitude": str(lng)})
+
+    def get_queryset(self):
+        expand_param = self.request.query_params.get("expand")
+        queryset = Place.objects.for_user(self.request.user).select_related("user")
+
+        if self.action == "list":
+            return queryset.with_list_expansion(expand_param)
+
+        if self.action == "retrieve":
+            return queryset.with_consumable_stats().with_detail_payload(
+                self.request.query_params.get("expand")
+            )
+
+        return queryset
+
+    @action(detail=True, methods=["get", "post"], url_path="visits")
+    def visits(self, request, public_id=None):
+        place = self.get_object()
+
+        if request.method == "GET":
+            qs = Visit.objects.for_user(request.user).filter(place=place).select_related("place")
+            page = self.paginate_queryset(qs)
+            ser = VisitSummarySerializer(page if page is not None else qs, many=True)
+            return self.get_paginated_response(ser.data) if page is not None else Response(ser.data)
+
+        serializer = self.get_action_serializer_class()(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        visit = serializer.save(place=place)
+        return Response(
+            VisitSummarySerializer(visit).data, status=status.HTTP_201_CREATED
+        )
+
+
+class VisitViewSet(WriteViewSetBase):
+    queryset = Visit.objects.all()
+    lookup_field = "public_id"
+    serializer_class = VisitWriteSerializer
+    serializer_action_classes = {
+        "retrieve": VisitDetailSerializer,
+    }
+    filterset_class = VisitFilter
+    action_param_serializers = {
+        "add_item": VisitItemParamsSerializer,
+    }
+
+    def get_queryset(self):
+        if self.action == "retrieve":
+            return Visit.objects.for_user(self.request.user).with_detail_payload(
+                self.request.query_params.get("expand")
+            )
+
+        return Visit.objects.for_user(self.request.user).with_expansion(
+            self.request.query_params.get("expand")
+        )
+
+    def get_serializer_class(self):
+        serializer_class = self.serializer_action_classes.get(self.action)
+        if serializer_class is not None:
+            return serializer_class
+        return super().get_serializer_class()
+
+    @action(detail=True, methods=["post"], url_path="items")
+    def add_item(self, request, public_id=None):
+        visit = self.get_object()
+        serializer = self.get_action_serializer_class()(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        item = serializer.save(visit=visit)
+        return Response(
+            VisitItemSerializer(item).data, status=status.HTTP_201_CREATED
+        )
+
+
+class VisitItemViewSet(WriteViewSetBase):
+    queryset = VisitItem.objects.all()
+    lookup_field = "public_id"
+    serializer_class = VisitItemWriteSerializer
+    filterset_class = VisitItemFilter
+
+    def get_queryset(self):
+        return VisitItem.objects.for_user(self.request.user).with_expansion(
+            self.request.query_params.get("expand")
+        )

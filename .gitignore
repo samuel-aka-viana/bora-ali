@@ -1,0 +1,13 @@
+.claude
+.remember
+*/.env
+*/node_modules
+docs/
+*/__pycache__
+*/.pytest_cache
+.codex
+frontend/.env
+.worktrees/
+__pycache__
+.env
+load-tests/

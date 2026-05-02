@@ -1,0 +1,93 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { visitsService } from "../services/visits.service";
+import { visitItemsService } from "../services/visit-items.service";
+import { VisitForm } from "../components/visits/VisitForm";
+import { BackButton } from "../components/ui/BackButton";
+import { LoadingState } from "../components/ui/LoadingState";
+import { ErrorMessage } from "../components/ui/ErrorMessage";
+import type { Visit } from "../types/visit";
+import type { VisitItem } from "../types/visit-item";
+
+type LocationState = { visit?: Visit };
+type ItemPayload = Partial<Omit<VisitItem, "photo">> & { photo?: string | File };
+
+export default function EditVisitPage() {
+  const { id } = useParams();
+  const nav = useNavigate();
+  const { t } = useTranslation();
+  const state = (useLocation().state ?? {}) as LocationState;
+  const [visit, setVisit] = useState<Visit | null>(
+    state.visit?.items !== undefined ? state.visit : null
+  );
+  const [loading, setLoading] = useState(!visit);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadVisit() {
+      if (state.visit?.items !== undefined) {
+        setVisit(state.visit);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setLoadError("");
+
+      try {
+        const loaded = await visitsService.get(id!);
+        if (!cancelled) {
+          setVisit(loaded);
+        }
+      } catch {
+        if (!cancelled) {
+          setLoadError(t("visitForm.loadError"));
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadVisit();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, state.visit, t]);
+
+  if (loading || !visit) {
+    return (
+      <div className="max-w-xl mx-auto p-4 space-y-4">
+        <BackButton />
+        {loadError ? <ErrorMessage message={loadError} /> : <LoadingState />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-xl mx-auto p-4">
+      <BackButton />
+      <h1 className="text-2xl font-bold mb-4">{t("visitForm.editTitle")}</h1>
+      <VisitForm
+        initial={visit}
+        initialItems={visit?.items ?? []}
+        onSubmit={async (visitData, items) => {
+          await visitsService.update(id!, visitData);
+          for (const it of items as ItemPayload[]) {
+            if (it.public_id) {
+              await visitItemsService.update(it.public_id, it);
+            } else {
+              await visitItemsService.create(id!, it);
+            }
+          }
+          nav(-1);
+        }}
+      />
+    </div>
+  );
+}
