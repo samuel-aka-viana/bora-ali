@@ -9,7 +9,8 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from model_bakery import baker
 from PIL import Image
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -367,3 +368,68 @@ class TestCrossUserMutations:
         api_client.force_authenticate(other_user)
         r = api_client.delete(f"/api/visit-items/{item.public_id}/")
         assert r.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Payloads inválidos — nunca devem retornar 500
+# ---------------------------------------------------------------------------
+
+class InvalidPayloadTests(APITestCase):
+    """Malformed or boundary payloads must never return 500."""
+
+    def setUp(self):
+        self.user = baker.make(User, username="payload_user")
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(refresh.access_token)}")
+        self.place = baker.make("places.Place", user=self.user)
+
+    def _assert_not_500(self, resp):
+        self.assertNotEqual(resp.status_code, 500, f"Got 500: {getattr(resp, 'data', resp.content)}")
+
+    def test_create_place_empty_body(self):
+        resp = self.client.post("/api/places/", {}, format="json")
+        self._assert_not_500(resp)
+
+    def test_create_place_null_fields(self):
+        resp = self.client.post("/api/places/", {"name": None, "status": None}, format="json")
+        self._assert_not_500(resp)
+
+    def test_create_place_very_long_name(self):
+        resp = self.client.post("/api/places/", {"name": "x" * 10_000, "status": "want"}, format="json")
+        self._assert_not_500(resp)
+
+    def test_create_place_invalid_status(self):
+        resp = self.client.post("/api/places/", {"name": "Test", "status": "INVALID_STATUS"}, format="json")
+        self._assert_not_500(resp)
+        self.assertIn(resp.status_code, [400, 422])
+
+    def test_create_visit_invalid_rating(self):
+        resp = self.client.post(
+            f"/api/places/{self.place.public_id}/visits/",
+            {"rating": 9999, "visited_at": "not-a-date"},
+            format="json",
+        )
+        self._assert_not_500(resp)
+
+    def test_patch_place_with_invalid_maps_url(self):
+        resp = self.client.patch(
+            f"/api/places/{self.place.public_id}/",
+            {"maps_url": "javascript:alert(1)"},
+            format="json",
+        )
+        self._assert_not_500(resp)
+        self.assertIn(resp.status_code, [400, 422])
+
+    def test_login_with_no_body(self):
+        resp = self.client.post("/api/auth/login/", {}, format="json")
+        self._assert_not_500(resp)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_register_with_mismatched_passwords(self):
+        resp = self.client.post(
+            "/api/auth/register/",
+            {"username": "newuser", "email": "new@test.com", "password": "pass123", "password_confirm": "different"},
+            format="json",
+        )
+        self._assert_not_500(resp)
+        self.assertIn(resp.status_code, [400, 422])
