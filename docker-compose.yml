@@ -114,6 +114,7 @@ services:
       zap-api-scan.py
       -t http://frontend/api/schema/
       -f openapi
+      -O http://frontend/api
       -r /zap/wrk/zap-api-report.html
       -J /zap/wrk/zap-api-report.json
       -I

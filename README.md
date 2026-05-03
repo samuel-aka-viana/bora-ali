@@ -34,6 +34,12 @@ graph TB
         Jaeger["📊 Jaeger\nOpenTelemetry Traces"]
     end
 
+    subgraph Security["Segurança (opcional, profile: security)"]
+        ZAP_API["🔎 ZAP API Scan\n(target: /api/schema/, reports → ./security/zap)"]
+        ZAP_BASE["🔎 ZAP Baseline\n(target: /, reports → ./security/zap)"]
+        HTTPX["🧪 httpx-security\n(custom HTTP tests in ./security/httpx)"]
+    end
+
     Browser -->|HTTPS| CF
     CF -->|HTTP| Nginx
     Nginx -->|/api/| Gunicorn
@@ -41,6 +47,10 @@ graph TB
     Gunicorn -->|SQL + CONN_MAX_AGE=60| DB
     Gunicorn -->|S3 API| Storage
     Gunicorn -->|OTLP| Jaeger
+
+    ZAP_API -->|scans API schema| Gunicorn
+    ZAP_BASE -->|scans frontend| Nginx
+    HTTPX -->|tests API| Gunicorn
 ```
 
 ### Stack Tecnológico
@@ -345,6 +355,30 @@ Rate limit: **10 requisições/minuto** em endpoints de auth.
 ## 🐳 Docker Compose
 
 O `docker-compose.yml` da raiz sobe todos os serviços: frontend, backend, postgres, **redis**, VersityGW e Jaeger.
+
+Além desses serviços principais, há uma camada de segurança definida no mesmo `docker-compose.yml` sob o profile `security`. Essa camada inclui três jobs opcionais:
+
+- `zap-api-scan` — executa um scan do OpenAPI (target padrão `http://frontend/api/schema/`) e gera `zap-api-report.html` e `zap-api-report.json` em `./security/zap`.
+- `zap-baseline` — executa um scan baseline do frontend (target padrão `http://frontend`) e gera `zap-baseline-report.html` em `./security/zap`.
+- `httpx-security` — roda testes HTTP personalizados contidos em `./security/httpx` (pip install + python run_tests.py) e imprime os resultados.
+
+Observações importantes:
+- Serviços com `profiles: ["security"]` NÃO são iniciados por padrão com `docker compose up -d`. Eles são jobs/scan e costumam terminar (Exit) depois de gerar relatórios — por isso podem aparecer como `Exited` em vez de `Up`.
+- Os relatórios são gravados no diretório da raiz `./security` (bind mount no compose). Garanta que `security/zap` exista e seja gravável.
+
+Como executar os scanners manualmente (modo foreground para ver logs):
+```/dev/null/cmd.sh#L1-6
+# Rodar zap-api-scan (executa e retorna quando terminar)
+docker compose --profile security run --rm zap-api-scan
+
+# Rodar zap-baseline
+docker compose --profile security run --rm zap-baseline
+
+# Rodar httpx-security
+docker compose --profile security run --rm httpx-security
+```
+
+Se preferir que esses serviços subam junto com o stack por padrão, remova a chave `profiles` das definições no `docker-compose.yml` ou sempre use `--profile security` ao subir o conjunto de serviços.
 
 ```yaml
 version: "3.9"
