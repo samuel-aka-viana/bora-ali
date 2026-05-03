@@ -636,6 +636,27 @@ npx playwright test auth-negative crud-negative responsive
 npm run dev -- --port 8181
 ```
 
+### Segurança
+
+Suíte de testes de segurança cobre:
+- Autorização cruzada: PATCH/DELETE de recurso de outro usuário → 404
+- Tokens expirados, adulterados e com `alg:none` → 401
+- Refresh token reutilizado após logout → 401
+- Brute force no login → 429 (`AuthRateThrottle`, scope `auth`, `10/min`)
+- Payloads inválidos em todos os endpoints → 4xx, nunca 500
+- Upload de SVG/HTML/PHP disfarçados de imagem → 400 (magic bytes check)
+- Acesso à mídia de outro usuário → 404
+
+```bash
+# Backend security tests
+cd backend && pytest core/tests/test_security.py core/tests/test_upload_security.py \
+  core/tests/test_media_views.py accounts/tests/test_token_security.py \
+  accounts/tests/test_throttle.py -v
+
+# nginx security checks (requer docker compose up -d)
+bash scripts/test_nginx_security.sh
+```
+
 ## 📦 Deployment
 
 ### Stack de produção
