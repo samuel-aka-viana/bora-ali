@@ -54,3 +54,33 @@ class ExpiredTokenTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
         resp = self.client.get("/api/places/")
         self.assertEqual(resp.status_code, 401)
+
+
+class RefreshTokenReuseAfterLogoutTests(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, username="logoutuser")
+        self.user.set_password("pass123")
+        self.user.save()
+
+    def test_refresh_token_rejected_after_logout(self):
+        # 1. Login to obtain tokens
+        resp = self.client.post(
+            "/api/auth/login/", {"username": "logoutuser", "password": "pass123"}, format="json"
+        )
+        self.assertEqual(resp.status_code, 200, f"Login failed: {resp.data}")
+        refresh_token = resp.data["refresh"]
+        access_token = resp.data["access"]
+
+        # 2. Logout (blacklists the refresh token)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
+        logout_resp = self.client.post(
+            "/api/auth/logout/", {"refresh": refresh_token}, format="json"
+        )
+        self.assertIn(logout_resp.status_code, [200, 205], f"Logout failed: {logout_resp.data}")
+
+        # 3. Attempt to refresh using the now-blacklisted token
+        self.client.credentials()
+        refresh_resp = self.client.post(
+            "/api/auth/refresh/", {"refresh": refresh_token}, format="json"
+        )
+        self.assertEqual(refresh_resp.status_code, 401, f"Blacklisted token still works: {refresh_resp.data}")
