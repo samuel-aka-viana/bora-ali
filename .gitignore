@@ -2,7 +2,7 @@
 .remember
 */.env
 */node_modules
-docs/
+docs/superpowers/
 */__pycache__
 */.pytest_cache
 .codex
