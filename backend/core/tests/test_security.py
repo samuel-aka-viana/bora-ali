@@ -309,3 +309,61 @@ class TestTextLimits:
             format="json",
         )
         assert r.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# Cross-user PATCH/DELETE mutations
+# ---------------------------------------------------------------------------
+
+class TestCrossUserMutations:
+    """PATCH/DELETE on resources belonging to another user must return 404."""
+
+    def test_patch_other_user_place_returns_404(self, user, other_user, api_client):
+        place = baker.make("places.Place", user=user)
+        api_client.force_authenticate(other_user)
+        r = api_client.patch(
+            f"/api/places/{place.public_id}/", {"name": "hacked"}, format="json"
+        )
+        assert r.status_code == 404
+
+    def test_delete_other_user_place_returns_404(self, user, other_user, api_client):
+        place = baker.make("places.Place", user=user)
+        api_client.force_authenticate(other_user)
+        r = api_client.delete(f"/api/places/{place.public_id}/")
+        assert r.status_code == 404
+
+    def test_patch_other_user_visit_returns_404(self, user, other_user, api_client):
+        place = baker.make("places.Place", user=user)
+        visit = baker.make("places.Visit", place=place)
+        api_client.force_authenticate(other_user)
+        r = api_client.patch(
+            f"/api/visits/{visit.public_id}/", {"notes": "hacked"}, format="json"
+        )
+        assert r.status_code == 404
+
+    def test_delete_other_user_visit_returns_404(self, user, other_user, api_client):
+        place = baker.make("places.Place", user=user)
+        visit = baker.make("places.Visit", place=place)
+        api_client.force_authenticate(other_user)
+        r = api_client.delete(f"/api/visits/{visit.public_id}/")
+        assert r.status_code == 404
+
+    def test_patch_other_user_visit_item_returns_404(self, user, other_user, api_client):
+        place = baker.make("places.Place", user=user)
+        visit = baker.make("places.Visit", place=place)
+        item = baker.make("places.VisitItem", visit=visit)
+        api_client.force_authenticate(other_user)
+        r = api_client.patch(
+            f"/api/visit-items/{item.public_id}/",
+            {"description": "hacked"},
+            format="json",
+        )
+        assert r.status_code == 404
+
+    def test_delete_other_user_visit_item_returns_404(self, user, other_user, api_client):
+        place = baker.make("places.Place", user=user)
+        visit = baker.make("places.Visit", place=place)
+        item = baker.make("places.VisitItem", visit=visit)
+        api_client.force_authenticate(other_user)
+        r = api_client.delete(f"/api/visit-items/{item.public_id}/")
+        assert r.status_code == 404
