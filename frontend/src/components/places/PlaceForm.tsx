@@ -28,6 +28,7 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
   const [preview, setPreview] = useState<string | null>(initial.cover_photo ?? null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const geocodeAbortRef = useRef<AbortController | null>(null);
@@ -109,12 +110,15 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
         }
         setFieldErrors({});
         setSubmitError("");
+        setSubmitting(true);
         try {
           await onSubmit({ ...f, ...(coverFile ? { cover_photo: coverFile } : {}) });
         } catch (error) {
           const apiError = getApiErrorState(error, t("placeForm.saveError"));
           setSubmitError(apiError.message);
           setFieldErrors(apiError.fieldErrors);
+        } finally {
+          setSubmitting(false);
         }
       }}
       className="space-y-3"
@@ -219,7 +223,7 @@ export function PlaceForm({ initial = {}, onSubmit }: Props) {
       </div>
 
       {submitError && <ErrorMessage message={submitError} />}
-      <Button type="submit" className="w-full">{t("placeForm.save")}</Button>
+      <Button type="submit" className="w-full" loading={submitting}>{t("placeForm.save")}</Button>
     </form>
   );
 }

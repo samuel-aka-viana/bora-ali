@@ -26,7 +26,7 @@ _STORAGE_SETTINGS = dict(
 )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 @override_settings(**_STORAGE_SETTINGS)
 def test_place_delete_removes_cover_photo(
     tmp_path, settings, django_user_model
@@ -47,7 +47,7 @@ def test_place_delete_removes_cover_photo(
     assert not default_storage.exists(path)
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 @override_settings(**_STORAGE_SETTINGS)
 def test_visit_delete_removes_photo(tmp_path, settings, django_user_model):
     settings.MEDIA_ROOT = str(tmp_path)
@@ -67,7 +67,7 @@ def test_visit_delete_removes_photo(tmp_path, settings, django_user_model):
     assert not default_storage.exists(path)
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 @override_settings(**_STORAGE_SETTINGS)
 def test_visit_item_delete_removes_photo(
     tmp_path, settings, django_user_model

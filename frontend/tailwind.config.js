@@ -5,7 +5,14 @@ export default {
     extend: {
       fontFamily: {
         fraunces: ["Georgia", "Times New Roman", "serif"],
-        sans: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "Arial", "sans-serif"],
+        sans: [
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "Arial",
+          "sans-serif",
+        ],
       },
       colors: {
         primary: "#C1121F",
@@ -29,10 +36,16 @@ export default {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        loadingBar: {
+          "0%": { transform: "translateX(-100%)" },
+          "50%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "fade-slide-up": "fadeSlideUp 0.45s ease-out both",
         "fade-in": "fadeIn 0.3s ease-out both",
+        "loading-bar": "loadingBar 1.4s ease-in-out infinite",
       },
     },
   },

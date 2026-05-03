@@ -38,6 +38,8 @@ Services: `localhost` (frontend), `localhost/api/` (API), `localhost/api/health/
 
 **Auth**: SimpleJWT with `ROTATE_REFRESH_TOKENS=True`. Logout blacklists refresh token. Frontend saves both tokens on every rotation.
 
+**Token storage**: Access + refresh tokens are stored in `localStorage`. Accepted tradeoff: XSS risk vs HttpOnly-cookie CSRF complexity. Mitigated by: short access TTL (30 min), session_key rotation on every refresh, single-session enforcement, and Content-Security-Policy headers.
+
 **Single-session**: `UserSession` row per user with rotating `session_key` embedded in JWTs, validated by `SingleSessionJWTAuthentication`. New login invalidates prior sessions. Frontend shows amber banner on `session_expired`/`session_invalidated` codes.
 
 **Session cache**: `SingleSessionJWTAuthentication` caches `session_key` in Redis (`session_key:{user_id}`, TTL=270s) — avoids a DB hit on every authenticated request. `UserSession.rotate()` calls `invalidate_session_cache(user_id)` immediately on new login.

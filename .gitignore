@@ -11,3 +11,4 @@ frontend/.env
 __pycache__
 .env
 load-tests/
+security/

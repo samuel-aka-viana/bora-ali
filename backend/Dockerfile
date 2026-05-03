@@ -36,8 +36,8 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["gunicorn", "config.wsgi:application", \
      "--bind", "0.0.0.0:8000", \
-     "--workers", "3", \
-     "--threads", "2", \
+     "--workers", "2", \
+     "--threads", "4", \
      "--worker-class", "gthread", \
      "--timeout", "60", \
      "--log-level", "info", \

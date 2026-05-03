@@ -30,7 +30,7 @@ CATEGORIES = ["Café", "Restaurante", "Bar", "Padaria", "Sorveteria"]
 STATUSES = ["want_to_visit", "visited", "favorite", "would_not_return"]
 ITEM_TYPES = ["sweet", "savory", "drink", "coffee", "juice", "dessert", "other"]
 
-_POOL_SIZE = 100
+_POOL_SIZE = 300
 _counter_lock = threading.Lock()
 _user_counter = itertools.count()
 

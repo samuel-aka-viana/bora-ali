@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [f, setF] = useState({ username: "", email: "", password: "", confirm_password: "" });
   const [err, setErr] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
   const upd = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setF({ ...f, [k]: e.target.value });
 
@@ -25,12 +26,15 @@ export default function RegisterPage() {
           try {
             setErr("");
             setFieldErrors({});
+            setSubmitting(true);
             await authService.register(f);
             nav("/login");
           } catch (error) {
             const apiError = getApiErrorState(error, t("auth.register.error"));
             setErr(apiError.message);
             setFieldErrors(apiError.fieldErrors);
+          } finally {
+            setSubmitting(false);
           }
         }}
         className="space-y-4"
@@ -48,7 +52,7 @@ export default function RegisterPage() {
           error={fieldErrors.confirm_password}
         />
         {err && <ErrorMessage message={err} />}
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" loading={submitting}>
           {t("auth.register.submit")}
         </Button>
         <p className="text-center text-sm text-muted">

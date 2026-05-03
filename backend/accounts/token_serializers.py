@@ -12,6 +12,7 @@ from core.exceptions import (
     SessionInvalidatedException,
     SessionNotFoundException,
 )
+from .authentication import invalidate_session_cache
 from .models import UserSession
 
 User = get_user_model()
@@ -40,8 +41,9 @@ class SingleSessionTokenObtainPairSerializer(TokenObtainPairSerializer):
                 .values_list("username", flat=True)
                 .first()
             )
-            if username:
-                attrs["username"] = username
+            # Always set username (found or not) so both paths hit authenticate()
+            # with the same code, minimising timing difference for email enumeration.
+            attrs["username"] = username or login_value
 
         request = self.context.get("request")
         user = authenticate(
@@ -61,27 +63,36 @@ def build_token_pair_for_user(user):
 
 
 class SingleSessionTokenRefreshSerializer(TokenRefreshSerializer):
-    """On refresh, validates that the refresh token's session_key still matches the DB."""
+    """On refresh, validates session_key and rotates it to eliminate replay window."""
 
     def validate(self, attrs):
         refresh = self.token_class(attrs["refresh"])
 
         token_session_key = refresh.get("session_key")
-        if token_session_key:
-            user_id = refresh.get(api_settings.USER_ID_CLAIM)
-            try:
-                user = User.objects.select_related("active_session").get(pk=user_id)
-                if str(user.active_session.session_key) != str(token_session_key):
-                    raise SessionInvalidatedException
-            except (User.DoesNotExist, UserSession.DoesNotExist):
-                raise SessionNotFoundException
+        if not token_session_key:
+            raise SessionNotFoundException
+
+        user_id = refresh.get(api_settings.USER_ID_CLAIM)
+        try:
+            user = User.objects.select_related("active_session").get(pk=user_id)
+            session = user.active_session
+            if str(session.session_key) != str(token_session_key):
+                raise SessionInvalidatedException
+        except (User.DoesNotExist, UserSession.DoesNotExist):
+            raise SessionNotFoundException
+
+        # Rotate session_key on every refresh — eliminates stolen-token replay window
+        session.rotate()
+        invalidate_session_cache(user.pk)
+        new_session_key = str(session.session_key)
 
         data = super().validate(attrs)
 
-        # Carry session_key forward into the new rotated refresh token
-        if "refresh" in data and token_session_key:
+        if "refresh" in data:
             new_refresh = self.token_class(data["refresh"])
-            new_refresh["session_key"] = str(token_session_key)
+            new_refresh["session_key"] = new_session_key
             data["refresh"] = str(new_refresh)
+            # Re-derive access token from updated refresh so it carries new session_key.
+            data["access"] = str(new_refresh.access_token)
 
         return data

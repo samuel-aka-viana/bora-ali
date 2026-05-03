@@ -209,7 +209,9 @@ class TestSingleSessionIntegration:
         new_session_key = new_token.get("session_key")
 
         assert original_session_key is not None
-        assert new_session_key == original_session_key
+        assert new_session_key is not None
+        # Session key must rotate on every refresh to eliminate replay window.
+        assert new_session_key != original_session_key
 
     def test_full_flow_same_session(self, api_client):
         """Full flow: Login → use API → refresh → use API again (all with same session)."""

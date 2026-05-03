@@ -61,6 +61,7 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
   const [preview, setPreview] = useState<string | null>(initial.photo ?? null);
   const [submitError, setSubmitError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -143,12 +144,15 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
           e.preventDefault();
           setSubmitError("");
           setFieldErrors({});
+          setSubmitting(true);
           try {
             await onSubmit({ ...v, ...(photoFile ? { photo: photoFile } : {}) }, items);
           } catch (error) {
             const apiError = getApiErrorState(error, t("visitForm.saveError"));
             setSubmitError(apiError.message);
             setFieldErrors(apiError.fieldErrors);
+          } finally {
+            setSubmitting(false);
           }
         }}
         className="space-y-4"
@@ -333,7 +337,7 @@ export function VisitForm({ initial = {}, initialItems = [], onSubmit }: Props) 
           )}
         </div>
 
-        <Button type="submit" className="w-full" data-testid="visit-form-save-button">
+        <Button type="submit" className="w-full" loading={submitting} data-testid="visit-form-save-button">
           {t("visitForm.save")}
         </Button>
       </form>

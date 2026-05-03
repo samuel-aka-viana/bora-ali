@@ -1,6 +1,7 @@
 import axios from "axios";
 import { ACCESS_KEY, REFRESH_KEY, SESSION_INVALIDATED_KEY } from "../utils/constants";
 import { clearClientState } from "../utils/client-state";
+import { notifyLoading } from "../components/ui/GlobalLoadingBar";
 
 type ApiEnv = {
   MODE?: string;
@@ -36,14 +37,16 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(ACCESS_KEY);
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  notifyLoading(1);
   return config;
 });
 
 let refreshing: Promise<string> | null = null;
 
 api.interceptors.response.use(
-  (r) => r,
+  (r) => { notifyLoading(-1); return r; },
   async (error) => {
+    notifyLoading(-1);
     const original = error.config;
 
     const isAuthEndpoint =

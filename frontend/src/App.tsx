@@ -4,6 +4,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { PublicRoute } from "./components/auth/PublicRoute";
 import { ProtectedLayout } from "./components/layout/ProtectedLayout";
+import { GlobalLoadingBar } from "./components/ui/GlobalLoadingBar";
 import { ACCESS_KEY } from "./utils/constants";
 const LoginPage = lazy(() => import("./routes/LoginPage"));
 const RegisterPage = lazy(() => import("./routes/RegisterPage"));
@@ -18,6 +19,7 @@ const AccountPage = lazy(() => import("./routes/AccountPage"));
 export default function App() {
   return (
     <AuthProvider>
+      <GlobalLoadingBar />
       <BrowserRouter>
         <Suspense fallback={null}>
           <Routes>

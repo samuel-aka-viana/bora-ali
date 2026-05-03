@@ -1,8 +1,11 @@
+import logging
 import os
 from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+_log = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -59,14 +62,15 @@ def _default_allowed_hosts() -> list[str]:
 
 ALLOWED_HOSTS = _split_env(os.getenv("DJANGO_ALLOWED_HOSTS", "")) or _default_allowed_hosts()
 
-# Impede deploy acidental com SECRET_KEY padrão ou fraca.
-# 50 chars é o mínimo recomendado para HS256 com segurança adequada.
-if not DEBUG and (SECRET_KEY in ("dev-secret", "changeme") or len(SECRET_KEY) < 50):
+_weak_key = SECRET_KEY in ("dev-secret", "changeme") or len(SECRET_KEY) < 50
+if _weak_key and not DEBUG:
     raise RuntimeError(
         "DJANGO_SECRET_KEY inválida: defina uma chave aleatória forte (mínimo 50 caracteres) "
         "antes de rodar em produção. Use: "
         "python -c \"from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())\""
     )
+if _weak_key and DEBUG:
+    _log.warning("DJANGO_SECRET_KEY is weak — set a strong key before going to production.")
 
 # Configurações de segurança HTTPS para produção.
 # Em desenvolvimento (DEBUG=True) são desativadas para não bloquear HTTP local.
@@ -152,7 +156,6 @@ CACHES = {
 }
 
 PASSWORD_HASHERS = [
-    "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
 ]
 
@@ -253,6 +256,8 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "ALGORITHM": "HS256",
+    "ALLOWED_ALGORITHMS": ["HS256"],
 }
 
 SPECTACULAR_SETTINGS = {

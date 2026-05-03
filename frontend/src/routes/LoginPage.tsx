@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
   const [showSessionMessage] = useState(() => {
     if (localStorage.getItem(SESSION_INVALIDATED_KEY)) {
       localStorage.removeItem(SESSION_INVALIDATED_KEY);
@@ -39,12 +40,15 @@ export default function LoginPage() {
           try {
             setErr("");
             setFieldErrors({});
+            setSubmitting(true);
             await login(username, password);
             nav("/places");
           } catch (error) {
             const apiError = getApiErrorState(error, t("auth.login.error"));
             setErr(apiError.message);
             setFieldErrors(apiError.fieldErrors);
+          } finally {
+            setSubmitting(false);
           }
         }}
         className="space-y-4"
@@ -71,7 +75,7 @@ export default function LoginPage() {
           error={fieldErrors.password}
         />
         {err && <ErrorMessage message={err} />}
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" loading={submitting}>
           {t("auth.login.submit")}
         </Button>
         <GoogleSignInButton

@@ -11,12 +11,31 @@ def _exempt_networks():
     return [ipaddress.ip_network(c) for c in cidrs]
 
 
+def _get_client_ip(request) -> str:
+    """Return the rightmost untrusted IP from X-Forwarded-For.
+
+    Prevents XFF spoofing: attacker cannot inject a trusted IP as the first
+    entry because we walk the chain from right (closest proxy) to left.
+    Falls back to REMOTE_ADDR when XFF is absent.
+    """
+    xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if xff:
+        trusted = _exempt_networks()
+        for ip_str in reversed([ip.strip() for ip in xff.split(",")]):
+            try:
+                ip = ipaddress.ip_address(ip_str)
+                if not any(ip in net for net in trusted):
+                    return ip_str
+            except ValueError:
+                continue
+    return request.META.get("REMOTE_ADDR", "")
+
+
 class AuthRateThrottle(ScopedRateThrottle):
     scope = "auth"
 
     def allow_request(self, request, view):
-        xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
-        ip_str = xff.split(",")[0].strip() if xff else request.META.get("REMOTE_ADDR", "")
+        ip_str = _get_client_ip(request)
         try:
             ip = ipaddress.ip_address(ip_str)
             if any(ip in net for net in _exempt_networks()):

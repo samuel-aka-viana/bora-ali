@@ -9,7 +9,11 @@ services:
     volumes:
       - bora_ali_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bora} -d ${POSTGRES_DB:-bora_ali}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-bora} -d ${POSTGRES_DB:-bora_ali}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -29,8 +33,8 @@ services:
     volumes:
       - bora_ali_storage:/data
     ports:
-      - "8081:7070"  # S3 API (browser access para media)
-      - "8082:7071"  # WebGUI
+      - "8081:7070" # S3 API (browser access para media)
+      - "8082:7071" # WebGUI
     depends_on:
       init-storage:
         condition: service_completed_successfully
@@ -102,10 +106,84 @@ services:
     depends_on:
       - backend
 
+  zap-api-scan:
+    image: zaproxy/zap-stable
+    container_name: bora-ali-zap-api-scan
+    working_dir: /zap/wrk
+    command: >
+      zap-api-scan.py
+      -t http://frontend/api/schema/
+      -f openapi
+      -r /zap/wrk/zap-api-report.html
+      -J /zap/wrk/zap-api-report.json
+      -I
+    volumes:
+      - ./security/zap:/zap/wrk
+    depends_on:
+      - frontend
+      - backend
+    profiles:
+      - security
+
+  zap-api-auth-scan:
+    image: zaproxy/zap-stable
+    container_name: bora-ali-zap-api-auth-scan
+    working_dir: /zap/wrk
+    environment:
+      ZAP_USERNAME: ${ZAP_USERNAME:-zaptest}
+      ZAP_PASSWORD: ${ZAP_PASSWORD:-Strong-Pass1!}
+      ZAP_LOGIN_URL: http://frontend/api/auth/login/
+      ZAP_SCHEMA_URL: http://frontend/api/schema/
+      ZAP_REPORT_HTML: /zap/wrk/zap-api-auth-report.html
+      ZAP_REPORT_JSON: /zap/wrk/zap-api-auth-report.json
+    command: ["/bin/sh", "/zap/wrk/zap-auth-scan.sh"]
+    volumes:
+      - ./security/zap:/zap/wrk
+    depends_on:
+      - frontend
+      - backend
+    profiles:
+      - security
+
+  zap-baseline:
+    image: zaproxy/zap-stable
+    container_name: bora-ali-zap-baseline
+    working_dir: /zap/wrk
+    command: >
+      zap-baseline.py
+      -t http://frontend
+      -r /zap/wrk/zap-baseline-report.html
+      -J /zap/wrk/zap-baseline-report.json
+      -I
+    volumes:
+      - ./security/zap:/zap/wrk
+    depends_on:
+      - frontend
+    profiles:
+      - security
+
+  httpx-security:
+    image: python:3.12-slim
+    container_name: bora-ali-httpx-security
+    working_dir: /tests
+    volumes:
+      - ./security/httpx:/tests
+    environment:
+      BASE_URL: http://frontend
+      API_BASE_URL: http://frontend/api
+    command: >
+      sh -c "pip install -r requirements.txt && python run_tests.py"
+    depends_on:
+      - frontend
+      - backend
+    profiles:
+      - security
+
 volumes:
   bora_ali_pgdata:
     external: true
     name: backend_bora_ali_pgdata
+
   bora_ali_storage:
     external: true
     name: backend_bora_ali_storage

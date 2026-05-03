@@ -22,7 +22,7 @@ _HKDF_SALT = b"bora-ali-media-v1"
 class ImageService:
     @staticmethod
     @functools.lru_cache(maxsize=128)
-    def _derive_key(user_id: int) -> Fernet:
+    def _derive_key(user_id: int, _secret_key: str) -> Fernet:
         hkdf = HKDF(
             algorithm=hashes.SHA256(),
             length=32,
@@ -30,7 +30,7 @@ class ImageService:
             info=str(user_id).encode(),
             backend=default_backend(),
         )
-        raw = hkdf.derive(settings.SECRET_KEY.encode())
+        raw = hkdf.derive(_secret_key.encode())
         return Fernet(base64.urlsafe_b64encode(raw))
 
     @staticmethod
@@ -41,11 +41,11 @@ class ImageService:
 
     @staticmethod
     def encrypt(data: bytes, user_id: int) -> bytes:
-        return ImageService._derive_key(user_id).encrypt(data)
+        return ImageService._derive_key(user_id, settings.SECRET_KEY).encrypt(data)
 
     @staticmethod
     def decrypt(data: bytes, user_id: int) -> bytes:
-        return ImageService._derive_key(user_id).decrypt(data)
+        return ImageService._derive_key(user_id, settings.SECRET_KEY).decrypt(data)
 
     @staticmethod
     def detect_content_type(data: bytes) -> str:

@@ -1,4 +1,5 @@
 import logging
+import posixpath
 
 from accounts.authentication import SingleSessionJWTAuthentication
 from core.image_service import ImageService
@@ -15,6 +16,8 @@ logger = logging.getLogger(__name__)
 @authentication_classes([SingleSessionJWTAuthentication])
 @permission_classes([IsAuthenticated])
 def serve_user_media(request, path):
+    # Normalize to strip any ".." segments before splitting.
+    path = posixpath.normpath("/" + path).lstrip("/")
     parts = path.split("/")
     if len(parts) < 3 or parts[0] != "users":
         raise Http404
